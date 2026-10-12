@@ -9,6 +9,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from .plots import draw_room, cov_ellipse
 
+PANEL_MAX_FRAC = 0.45   # the panels may use up to this share of the window width
+
 
 class LiveOverlay:
     def __init__(self, view, cam, ref_path):
@@ -17,7 +19,7 @@ class LiveOverlay:
         if not self.ok:
             print("Note: this MuJoCo version has no viewer overlays; showing the 3D view only.")
             return
-        self.fig, self.ax = plt.subplots(figsize=(4, 4), dpi=80)
+        self.fig, self.ax = plt.subplots(figsize=(5.2, 3.9), dpi=90)   # 4:3, same shape as the camera
         self.canvas = FigureCanvasAgg(self.fig)
         self.ref_xy = np.c_[ref_path.x, ref_path.y]
         self.n, self.map_img = 0, None
@@ -50,18 +52,19 @@ class LiveOverlay:
             if vp is None or vp.width < 300 or vp.height < 300:
                 return
             pad = 10
-            pw = int(min(vp.width * 0.3, (vp.height - 3 * pad) / 1.75))   # panel width
-            ch = int(pw * 3 / 4)                                            # camera height (4:3)
+            # two 4:3 panels stacked on the right, as big as the window allows
+            pw = int(min(vp.width * PANEL_MAX_FRAC, (vp.height - 3 * pad) / 1.5))
+            ch = int(pw * 3 / 4)
             left = vp.left + vp.width - pw - pad
             cam_rect = mujoco.MjrRect(left, vp.bottom + vp.height - ch - pad, pw, ch)
-            map_rect = mujoco.MjrRect(left, cam_rect.bottom - pw - pad, pw, pw)
+            map_rect = mujoco.MjrRect(left, cam_rect.bottom - ch - pad, pw, ch)
             images = []
             if self.cam.last_image is not None:
                 images.append((cam_rect, cv2.resize(self.cam.last_image, (pw, ch))))
             if self.map_img is None or self.n % 3 == 0:      # map is slower to draw: ~3 Hz
                 self.map_img = self._map_image(L)
             self.n += 1
-            images.append((map_rect, cv2.resize(self.map_img, (pw, pw))))
+            images.append((map_rect, cv2.resize(self.map_img, (pw, ch))))
             self.view.set_images(images)
 
             err = np.hypot(*(np.array(L["x_true"][-1][:2]) - L["x_est"][-1][:2]))
