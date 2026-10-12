@@ -1,7 +1,4 @@
-"""One end-to-end trial: sense -> estimate -> control on the estimate -> dock.
 
-Ground truth is read ONLY in the block marked EVALUATION, for logging/metrics.
-"""
 import numpy as np
 
 from . import config as C
