@@ -1,4 +1,5 @@
 
+import time
 import numpy as np
 
 from . import config as C
@@ -35,12 +36,14 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
     if viewer:
         import mujoco.viewer
         view = mujoco.viewer.launch_passive(sim.m, sim.d)
+        print("MuJoCo viewer opened: the robot drives in real time (~30 s). Close the window to finish.")
 
     n_steps = int((path.T + settle_time) / C.DT)
     ticks_prev = enc.read()
     L = {k: [] for k in ["t", "x_est", "P", "x_true", "ref", "u", "e_ctrl",
                          "meas", "accepted", "nis", "safety", "front"]}
 
+    t_wall0 = time.perf_counter()
     for k in range(n_steps):
         t = k * C.DT
 
@@ -85,6 +88,17 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
             if not view.is_running():
                 break
             view.sync()
+            # run at real-time speed so you can watch it
+            lag = (k + 1) * C.DT - (time.perf_counter() - t_wall0)
+            if lag > 0:
+                time.sleep(lag)
+
+    if view is not None:
+        print("Run finished. Close the viewer window to see the results.")
+        while view.is_running():
+            view.sync()
+            time.sleep(0.05)
+        view.close()
 
     if rec is not None:
         rec.close()
