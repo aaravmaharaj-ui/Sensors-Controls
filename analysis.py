@@ -1,9 +1,4 @@
-"""Part A: controllability of the tracking-error model and observability of the
-EKF model for each sensor combination. Prints results and writes
-results/analysis.txt.
 
-    python analysis.py
-"""
 import os
 import numpy as np
 
@@ -24,8 +19,6 @@ def rank(M, tol=1e-6):
     sv = np.linalg.svd(M, compute_uv=False)
     return int(np.sum(sv > tol * sv[0])) if sv[0] > 0 else 0, sv
 
-
-# ------------------------------------------------------------ controllability
 out("=== Controllability of the linearised tracking-error model ===")
 for vr, wr in [(0.15, 0.0), (0.15, 0.5), (0.0, 0.5), (0.0, 0.0)]:
     A, B = error_model(vr, wr)
@@ -39,10 +32,9 @@ out(f"  LQR gain at v_r={C.V_REF}, w_r=0:\n{np.array2string(K, precision=3)}")
 A, B = error_model(C.V_REF, 0.0)
 out(f"  closed-loop poles: {np.round(np.linalg.eigvals(A - B @ K), 3)}")
 
-# --------------------------------------------------------------- observability
 out("\n=== Local observability of the EKF model along the docking approach ===")
 path = RefPath(C.WAYPOINTS, C.V_REF, C.A_REF)
-ts = np.arange(path.T - 8.0, path.T, C.DT)          # last 8 s: marker in view
+ts = np.arange(path.T - 8.0, path.T, C.DT)
 
 
 def obs_matrix(rows, moving=True):
@@ -69,7 +61,6 @@ for name, rows, moving in cases:
     r, sv = rank(obs_matrix(rows, moving))
     out(f"  {name:48s} rank {r}/3   singular values {np.array2string(sv, precision=3)}")
 
-# Null space of the range-bearing case: rotation about the marker
 x = path.at(ts[0])[:3]
 _, H = EKF.h(x)
 null = np.linalg.svd(H[:2])[2][-1]
