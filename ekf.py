@@ -1,9 +1,4 @@
-"""Extended Kalman filter for the TurtleBot3 pose x = [x, y, theta] (world frame).
 
-Predict: wheel-encoder odometry (ds, dth) drives the unicycle motion model.
-Update:  ArUco marker measurement z = [range, bearing, marker_yaw] from the
-         camera, which sits CAM_X ahead of the wheel axle.
-"""
 import numpy as np
 
 from . import config as C
@@ -17,7 +12,7 @@ class EKF:
         self.rows = [0, 1, 2] if meas_model == "pose" else [0, 1]
         self.n_reject = 0      # consecutive gated measurements
 
-    # ---------------------------------------------------------- predict ---
+
     def predict(self, ds, dth):
         th_mid = self.x[2] + dth / 2.0          # midpoint heading (2nd-order accurate)
         c, s = np.cos(th_mid), np.sin(th_mid)
@@ -37,7 +32,7 @@ class EKF:
         M = np.diag([sig_s ** 2, sig_th ** 2])
         self.P = F @ self.P @ F.T + V @ M @ V.T
 
-    # ------------------------------------------------------ measurement ---
+
     @staticmethod
     def h(x):
         """Expected [range, bearing, marker_yaw] and its Jacobian H (3x3)."""
