@@ -1,8 +1,0 @@
-mujoco>=3.2
-numpy
-scipy
-matplotlib
-opencv-python>=4.8   # needs cv2.aruco (included since 4.7)
-imageio
-imageio-ffmpeg
-pytest
