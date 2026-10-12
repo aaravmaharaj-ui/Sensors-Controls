@@ -1,9 +1,4 @@
-"""Sensor models: wheel encoders, 2D LiDAR and the ArUco camera.
 
-Each sensor produces what the real TurtleBot3 would: encoder ticks, a range
-scan, and a camera image that is processed with OpenCV. None of them return
-the true pose.
-"""
 import numpy as np
 import mujoco
 import cv2
@@ -15,7 +10,7 @@ def wrap(a):
     return (a + np.pi) % (2 * np.pi) - np.pi
 
 
-# ---------------------------------------------------------------- encoders ---
+#encoders
 class Encoders:
     def __init__(self, sim):
         self.sim = sim
@@ -36,7 +31,7 @@ def odometry(dticks):
     return (dl + dr) / 2.0, (dr - dl) / C.ODOM_TRACK_EFF
 
 
-# ------------------------------------------------------------------- LiDAR ---
+#LiDAR 
 class Lidar:
     def __init__(self, sim, rng):
         self.sim, self.rng = sim, rng
@@ -60,7 +55,7 @@ class Lidar:
         return ranges[np.abs(self.angles) < C.SAFETY_CONE].min()
 
 
-# ---------------------------------------------------------- ArUco camera ---
+#ArUco camera
 def camera_matrix():
     """Pinhole intrinsics. In sim these follow from the field of view; on the
     real robot replace them with a checkerboard calibration (cv2.calibrateCamera)."""
