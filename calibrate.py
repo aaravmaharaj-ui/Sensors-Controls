@@ -1,16 +1,4 @@
-"""Sensor calibration and noise identification (Part B evidence).
 
-Uses simulator ground truth, which is legitimate here: this is an offline
-calibration, the same as measuring against a tape measure / motion capture on
-the real robot. The numbers it prints go into tb3dock/config.py.
-
-  1. Odometry calibration: effective wheel radius (straight drive) and
-     effective track width (spin in place).
-  2. Odometry noise: fit ODOM_ALPHA from per-step odometry residuals.
-  3. Camera noise: ArUco range/bearing/yaw error vs distance -> R_STD0, R_STD_PER_M.
-
-    python calibrate.py
-"""
 import json
 import os
 import numpy as np
