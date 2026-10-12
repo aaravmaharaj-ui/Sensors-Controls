@@ -9,20 +9,38 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from .plots import draw_room, cov_ellipse
 
-PANEL_MAX_FRAC = 0.45   # the panels may use up to this share of the window width
+SPLIT = 0.5             # share of the window width given to the 3D view (left)
+BG = (30, 30, 34)       # background colour of the right half (RGB)
 
 
 class LiveOverlay:
     def __init__(self, view, cam, ref_path):
         self.view, self.cam = view, cam
-        self.ok = all(hasattr(view, a) for a in ("set_images", "set_texts", "viewport"))
+        self.ok = all(hasattr(view, a) for a in ("set_images", "set_texts", "viewport", "cam", "m"))
         if not self.ok:
             print("Note: this MuJoCo version has no viewer overlays; showing the 3D view only.")
             return
         self.fig, self.ax = plt.subplots(figsize=(5.2, 3.9), dpi=90)   # 4:3, same shape as the camera
         self.canvas = FigureCanvasAgg(self.fig)
         self.ref_xy = np.c_[ref_path.x, ref_path.y]
-        self.n, self.map_img = 0, None
+        self.n, self.map_img, self.framed = 0, None, False
+
+    def _frame_scene(self, vp):
+        """Point the viewer camera so the room sits in the LEFT part of the window."""
+        m, cam = self.view.m, self.view.cam
+        aspect = vp.width / vp.height
+        t = np.tan(np.deg2rad(m.vis.global_.fovy) / 2)
+        d = (5.4 / SPLIT) / 2 / (t * aspect)                 # fit the 4.2 m room plus margin
+        cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+        cam.lookat[:] = [1.5 + 0.85 * (1 - SPLIT) * d * t * aspect, 0.0, 0.0]
+        cam.distance, cam.azimuth, cam.elevation = d, 90.0, -60.0
+        self.framed = True
+
+    @staticmethod
+    def _fit(img, w, h):
+        """Resize keeping the aspect ratio so it fits inside w x h."""
+        s = min(w / img.shape[1], h / img.shape[0])
+        return cv2.resize(img, (max(1, int(img.shape[1] * s)), max(1, int(img.shape[0] * s))))
 
     def _map_image(self, L):
         ax = self.ax
@@ -51,20 +69,26 @@ class LiveOverlay:
             vp = self.view.viewport
             if vp is None or vp.width < 300 or vp.height < 300:
                 return
-            pad = 10
-            # two 4:3 panels stacked on the right, as big as the window allows
-            pw = int(min(vp.width * PANEL_MAX_FRAC, (vp.height - 3 * pad) / 1.5))
-            ch = int(pw * 3 / 4)
-            left = vp.left + vp.width - pw - pad
-            cam_rect = mujoco.MjrRect(left, vp.bottom + vp.height - ch - pad, pw, ch)
-            map_rect = mujoco.MjrRect(left, cam_rect.bottom - ch - pad, pw, ch)
-            images = []
-            if self.cam.last_image is not None:
-                images.append((cam_rect, cv2.resize(self.cam.last_image, (pw, ch))))
+            if not self.framed:
+                self._frame_scene(vp)
+            pad = 12
+            rw = int(vp.width * (1 - SPLIT))                 # right half
+            panel = np.empty((vp.height, rw, 3), np.uint8)
+            panel[:] = BG
+            tile_w, tile_h = rw - 2 * pad, (vp.height - 3 * pad) // 2
             if self.map_img is None or self.n % 3 == 0:      # map is slower to draw: ~3 Hz
                 self.map_img = self._map_image(L)
             self.n += 1
-            images.append((map_rect, cv2.resize(self.map_img, (pw, ch))))
+            tiles = [self.cam.last_image, self.map_img]      # top: camera, bottom: map
+            for i, img in enumerate(tiles):
+                if img is None:
+                    continue
+                im = self._fit(img, tile_w, tile_h)
+                y = pad + i * (tile_h + pad) + (tile_h - im.shape[0]) // 2
+                x = pad + (tile_w - im.shape[1]) // 2
+                panel[y:y + im.shape[0], x:x + im.shape[1]] = im
+            rect = mujoco.MjrRect(vp.left + vp.width - rw, vp.bottom, rw, vp.height)
+            images = [(rect, panel)]
             self.view.set_images(images)
 
             err = np.hypot(*(np.array(L["x_true"][-1][:2]) - L["x_est"][-1][:2]))

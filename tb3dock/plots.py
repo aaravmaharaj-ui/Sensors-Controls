@@ -12,9 +12,9 @@ from .sensors import wrap
 
 def draw_room(ax):
     ax.add_patch(Rectangle((-0.6, -1.6), 4.2, 3.2, fill=False, lw=2, ec="0.3"))
-    ax.add_patch(Rectangle((0.8, -0.2), 0.4, 0.4, color="#c0603a", alpha=.8))
-    ax.add_patch(Circle((2.0, -0.6), 0.2, color="#c0603a", alpha=.8))
-    ax.add_patch(Rectangle((1.95, 0.6), 0.3, 0.3, color="#c0603a", alpha=.8))
+    ax.add_patch(Rectangle((0.8, -0.2), 0.4, 0.4, color="#8059bf", alpha=.8))
+    ax.add_patch(Circle((2.0, -0.6), 0.2, color="#8059bf", alpha=.8))
+    ax.add_patch(Rectangle((1.95, 0.6), 0.3, 0.3, color="#8059bf", alpha=.8))
     ax.add_patch(Rectangle((3.31, -0.15), 0.04, 0.3, color="#3366cc"))
     ax.plot(*C.MARKER_POS, "ks", ms=6)
     ax.annotate("ArUco dock", C.MARKER_POS, (2.75, -0.45), fontsize=8,

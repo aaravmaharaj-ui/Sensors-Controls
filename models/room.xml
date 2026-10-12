@@ -15,7 +15,7 @@
     <texture name="aruco" type="2d" file="aruco_0.png"/>
     <material name="aruco" texture="aruco" emission="0.9" specular="0" shininess="0"/>
     <material name="wall" rgba=".92 .92 .88 1"/>
-    <material name="obst" rgba=".75 .35 .2 1"/>
+    <material name="obst" rgba=".5 .35 .75 1"/>
   </asset>
 
   <worldbody>
