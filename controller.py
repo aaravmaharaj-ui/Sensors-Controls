@@ -1,16 +1,4 @@
-"""LQR trajectory tracker for a unicycle, running on the ESTIMATED pose.
 
-Tracking error in the robot frame (Kanayama et al., 1990):
-    e_x  = cos(th)(x_r - x) + sin(th)(y_r - y)      along-track
-    e_y  = -sin(th)(x_r - x) + cos(th)(y_r - y)     lateral
-    e_th = th_r - th
-Linearised about the reference (v_r, w_r) with inputs
-u = [v_r cos(e_th) - v, w_r - w]:
-    e_dot = A e + B u,  A = [[0, w_r, 0], [-w_r, 0, v_r], [0, 0, 0]],
-                        B = [[1, 0], [0, 0], [0, 1]]
-(A, B) is controllable only if v_r or w_r is non-zero, so we linearise at
-v_r >= V_FLOOR. The gain is recomputed every step (gain scheduling).
-"""
 import numpy as np
 from scipy.linalg import solve_continuous_are
 
