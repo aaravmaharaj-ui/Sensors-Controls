@@ -36,7 +36,9 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
     if viewer:
         import mujoco.viewer
         view = mujoco.viewer.launch_passive(sim.m, sim.d)
-        print("MuJoCo viewer opened: the robot drives in real time (~30 s). Close the window to finish.")
+        print("MuJoCo viewer opened: the robot drives in real time (~30 s).")
+        from .live import LiveOverlay
+        overlay = LiveOverlay(view, cam, path)
 
     n_steps = int((path.T + settle_time) / C.DT)
     ticks_prev = enc.read()
@@ -87,6 +89,8 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
         if view is not None:
             if not view.is_running():
                 break
+            if k % 2 == 0:
+                overlay.update(L)
             view.sync()
             # run at real-time speed so you can watch it
             lag = (k + 1) * C.DT - (time.perf_counter() - t_wall0)
@@ -94,10 +98,13 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
                 time.sleep(lag)
 
     if view is not None:
-        print("Run finished. Close the viewer window to see the results.")
-        while view.is_running():
-            view.sync()
-            time.sleep(0.05)
+        # keep the window open until you are done looking (the viewer draws on its own thread)
+        print("Run finished. Press Enter in this terminal to close the viewer and see the results.")
+        try:
+            input()
+        except EOFError:
+            pass
+        overlay.close()
         view.close()
 
     if rec is not None:
