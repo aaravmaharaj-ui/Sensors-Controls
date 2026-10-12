@@ -1,0 +1,24 @@
+{
+  "args": {
+    "name": "nominal",
+    "seed": 1,
+    "no_start_noise": false,
+    "push": null,
+    "wheel_err": 0.0,
+    "meas": "pose",
+    "video": true,
+    "viewer": false
+  },
+  "est_pos_rmse_m": 0.04054251793973791,
+  "est_yaw_rmse_deg": 1.489483557122152,
+  "track_pos_rmse_m": 0.042515651024022945,
+  "track_pos_max_m": 0.06803035371291583,
+  "dock_pos_err_m": 0.005145299122690681,
+  "dock_yaw_err_deg": 0.41489355980926046,
+  "dock_success": true,
+  "mean_nees": 15.608424706622614,
+  "n_detections": 129,
+  "n_rejected": 9,
+  "safety_stops": 0,
+  "min_front_range_m": 0.19265982144552948
+}

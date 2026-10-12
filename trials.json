@@ -1,0 +1,160 @@
+{
+  "args": {
+    "n": 8,
+    "wheel_err": 0.005,
+    "push": false,
+    "meas": "pose",
+    "name": "trials_wheel0.5pct"
+  },
+  "summary": {
+    "n": 8,
+    "success_rate": 1.0,
+    "dock_pos_err_m": {
+      "mean": 0.004673164213464049,
+      "std": 0.001662156365097354,
+      "max": 0.0067658425297339566
+    },
+    "dock_yaw_err_deg": {
+      "mean": 0.5219173795522372,
+      "std": 0.40603137671615497,
+      "max": 1.3427171476495399
+    },
+    "est_pos_rmse_m": {
+      "mean": 0.04343619556081876,
+      "std": 0.007941234411059202,
+      "max": 0.05786211020850075
+    },
+    "track_pos_rmse_m": {
+      "mean": 0.04724514302248149,
+      "std": 0.009802739866017918,
+      "max": 0.06395855027248205
+    },
+    "mean_nees": {
+      "mean": 20.767922352991746,
+      "std": 4.565481290905644,
+      "max": 26.949662685119247
+    }
+  },
+  "trials": [
+    {
+      "est_pos_rmse_m": 0.03749065577359784,
+      "est_yaw_rmse_deg": 1.5354570001461347,
+      "track_pos_rmse_m": 0.04043640749219707,
+      "track_pos_max_m": 0.06778882539810055,
+      "dock_pos_err_m": 0.004076643450745157,
+      "dock_yaw_err_deg": 0.2957627235243773,
+      "dock_success": true,
+      "mean_nees": 26.580222897041203,
+      "n_detections": 135,
+      "n_rejected": 14,
+      "safety_stops": 0,
+      "min_front_range_m": 0.19725370151520202,
+      "seed": 100
+    },
+    {
+      "est_pos_rmse_m": 0.03542708771364319,
+      "est_yaw_rmse_deg": 1.1665852393631064,
+      "track_pos_rmse_m": 0.03838398688683153,
+      "track_pos_max_m": 0.07572039219898505,
+      "dock_pos_err_m": 0.0026305771226951546,
+      "dock_yaw_err_deg": 0.017911247490163602,
+      "dock_success": true,
+      "mean_nees": 13.228675406196249,
+      "n_detections": 126,
+      "n_rejected": 13,
+      "safety_stops": 0,
+      "min_front_range_m": 0.19415438342235028,
+      "seed": 101
+    },
+    {
+      "est_pos_rmse_m": 0.05786211020850075,
+      "est_yaw_rmse_deg": 1.3390903724559886,
+      "track_pos_rmse_m": 0.06366538438273113,
+      "track_pos_max_m": 0.09293599260849454,
+      "dock_pos_err_m": 0.006084099539000034,
+      "dock_yaw_err_deg": 0.6066402490418429,
+      "dock_success": true,
+      "mean_nees": 21.02886543939425,
+      "n_detections": 123,
+      "n_rejected": 13,
+      "safety_stops": 0,
+      "min_front_range_m": 0.191986216031028,
+      "seed": 102
+    },
+    {
+      "est_pos_rmse_m": 0.03854517408059253,
+      "est_yaw_rmse_deg": 1.674002568449615,
+      "track_pos_rmse_m": 0.03965169425724428,
+      "track_pos_max_m": 0.07267808016657541,
+      "dock_pos_err_m": 0.0035067355790291176,
+      "dock_yaw_err_deg": 1.3427171476495399,
+      "dock_success": true,
+      "mean_nees": 18.282389998015553,
+      "n_detections": 125,
+      "n_rejected": 11,
+      "safety_stops": 0,
+      "min_front_range_m": 0.19152621110396748,
+      "seed": 103
+    },
+    {
+      "est_pos_rmse_m": 0.04135938447138226,
+      "est_yaw_rmse_deg": 1.6479206658849124,
+      "track_pos_rmse_m": 0.04499614497393689,
+      "track_pos_max_m": 0.0769325807736156,
+      "dock_pos_err_m": 0.0067658425297339566,
+      "dock_yaw_err_deg": 0.2757991788432892,
+      "dock_success": true,
+      "mean_nees": 26.949662685119247,
+      "n_detections": 135,
+      "n_rejected": 14,
+      "safety_stops": 0,
+      "min_front_range_m": 0.19577576536101782,
+      "seed": 104
+    },
+    {
+      "est_pos_rmse_m": 0.05534241885528457,
+      "est_yaw_rmse_deg": 2.008867047051663,
+      "track_pos_rmse_m": 0.06395855027248205,
+      "track_pos_max_m": 0.11176382341025391,
+      "dock_pos_err_m": 0.006649710205148164,
+      "dock_yaw_err_deg": 0.748530376277245,
+      "dock_success": true,
+      "mean_nees": 17.330543068762147,
+      "n_detections": 120,
+      "n_rejected": 9,
+      "safety_stops": 0,
+      "min_front_range_m": 0.19771557591430414,
+      "seed": 105
+    },
+    {
+      "est_pos_rmse_m": 0.04320904499002592,
+      "est_yaw_rmse_deg": 1.6052890930449057,
+      "track_pos_rmse_m": 0.04468903066395212,
+      "track_pos_max_m": 0.07294465382244575,
+      "dock_pos_err_m": 0.005341608103562743,
+      "dock_yaw_err_deg": 0.12090993992064819,
+      "dock_success": true,
+      "mean_nees": 24.463579008730914,
+      "n_detections": 133,
+      "n_rejected": 17,
+      "safety_stops": 0,
+      "min_front_range_m": 0.20094718671645861,
+      "seed": 106
+    },
+    {
+      "est_pos_rmse_m": 0.03825368839352303,
+      "est_yaw_rmse_deg": 1.5955387756887802,
+      "track_pos_rmse_m": 0.04217994525047686,
+      "track_pos_max_m": 0.07300022542308283,
+      "dock_pos_err_m": 0.0023300971777980655,
+      "dock_yaw_err_deg": 0.7670681736707914,
+      "dock_success": true,
+      "mean_nees": 18.279440320674397,
+      "n_detections": 129,
+      "n_rejected": 11,
+      "safety_stops": 0,
+      "min_front_range_m": 0.19004346767544092,
+      "seed": 107
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+<!-- TurtleBot3 Burger-like differential drive robot in a room with obstacles
+     and an ArUco-marked charging dock. Units: metres, kg, seconds. -->
+<mujoco model="tb3_room">
+  <compiler angle="degree" texturedir="../assets"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+
+  <visual>
+    <global offwidth="1280" offheight="960"/>
+    <headlight ambient="0.45 0.45 0.45" diffuse="0.45 0.45 0.45"/>
+  </visual>
+
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" rgb1=".86 .86 .86" rgb2=".78 .78 .78" width="512" height="512"/>
+    <material name="floor" texture="grid" texrepeat="8 8"/>
+    <texture name="aruco" type="2d" file="aruco_0.png"/>
+    <material name="aruco" texture="aruco" emission="0.9" specular="0" shininess="0"/>
+    <material name="wall" rgba=".92 .92 .88 1"/>
+    <material name="obst" rgba=".75 .35 .2 1"/>
+  </asset>
+
+  <worldbody>
+    <light pos="1.5 0 3" dir="0 0 -1" diffuse=".5 .5 .5"/>
+    <camera name="overview" pos="1.5 -2.9 3.1" xyaxes="1 0 0 0 0.73 0.68"/>
+    <geom name="floor" type="plane" size="3 3 .1" material="floor"/>
+
+    <!-- Room: x in [-0.6, 3.6], y in [-1.6, 1.6] -->
+    <geom name="wall_n" type="box" pos="1.5 1.65 .15" size="2.2 .05 .15" material="wall"/>
+    <geom name="wall_s" type="box" pos="1.5 -1.65 .15" size="2.2 .05 .15" material="wall"/>
+    <geom name="wall_w" type="box" pos="-0.65 0 .15" size=".05 1.6 .15" material="wall"/>
+    <geom name="wall_e" type="box" pos="3.65 0 .15" size=".05 1.6 .15" material="wall"/>
+
+    <!-- Obstacles -->
+    <geom name="obs_box" type="box" pos="1.0 0 .15" size=".2 .2 .15" material="obst"/>
+    <geom name="obs_cyl" type="cylinder" pos="2.0 -0.6 .15" size=".2 .15" material="obst"/>
+    <geom name="obs_box2" type="box" pos="2.1 0.75 .15" size=".15 .15 .15" material="obst"/>
+
+    <!-- Charging dock with ArUco marker (marker centre at x=3.3055, z=0.133) -->
+    <body name="dock" pos="3.33 0 0">
+      <geom name="dock_back" type="box" pos="0 0 .12" size=".02 .15 .12" rgba=".2 .4 .8 1"/>
+      <geom name="dock_pad" type="box" pos="-0.2 0 .0005" size=".2 .12 .0005" rgba=".3 .5 .9 1"
+            contype="0" conaffinity="0"/>
+      <!-- group 2 = visual only: invisible to LiDAR rays and never collides -->
+      <geom name="aruco" type="plane" pos="-0.0245 0 0.133" euler="0 -90 0" size=".07 .07 .01"
+            material="aruco" contype="0" conaffinity="0" group="2"/>
+    </body>
+
+    <!-- Robot: body origin on the wheel axle, 0.033 m above the floor -->
+    <body name="base" pos="0 0 0.033">
+      <freejoint name="root"/>
+      <!-- centre of mass sits behind the axle, as on the real Burger, so it rests on the rear caster -->
+      <geom name="chassis" type="cylinder" pos="-0.025 0 0.04" size=".07 .035" mass="0.8" rgba=".15 .15 .15 1"/>
+      <geom name="lidar_head" type="cylinder" pos="0 0 0.095" size=".03 .015" mass=".1" rgba=".05 .05 .05 1"/>
+      <geom name="caster" type="sphere" pos="-0.075 0 -0.023" size=".01" friction="0 0 0" mass=".02" rgba=".5 .5 .5 1"/>
+      <!-- anti-tip skid 2 mm above the floor: only touches if the robot pitches forward -->
+      <geom name="skid" type="sphere" pos="0.05 0 -0.021" size=".01" friction="0 0 0" mass=".01" rgba=".5 .5 .5 1"/>
+      <camera name="cam" pos="0.06 0 0.10" xyaxes="0 -1 0 0 0 1" fovy="49"/>
+      <body name="wheel_l" pos="0 0.08 0">
+        <joint name="wheel_l" type="hinge" axis="0 1 0" damping="0.0005" armature="0.0005"/>
+        <geom name="wheel_l" type="cylinder" size=".033 .009" zaxis="0 1 0" mass=".05"
+              friction="1.5 0.01 0.001" rgba=".3 .3 .3 1"/>
+      </body>
+      <body name="wheel_r" pos="0 -0.08 0">
+        <joint name="wheel_r" type="hinge" axis="0 1 0" damping="0.0005" armature="0.0005"/>
+        <geom name="wheel_r" type="cylinder" size=".033 .009" zaxis="0 1 0" mass=".05"
+              friction="1.5 0.01 0.001" rgba=".3 .3 .3 1"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- Wheel velocity servos, like the Dynamixel velocity mode on the real robot -->
+    <velocity name="v_l" joint="wheel_l" kv="0.05" ctrlrange="-8 8" forcerange="-1.5 1.5"/>
+    <velocity name="v_r" joint="wheel_r" kv="0.05" ctrlrange="-8 8" forcerange="-1.5 1.5"/>
+  </actuator>
+</mujoco>

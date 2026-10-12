@@ -1,0 +1,26 @@
+=== Controllability of the linearised tracking-error model ===
+  v_r=0.15, w_r=0.0:  rank = 3/3  -> controllable
+  v_r=0.15, w_r=0.5:  rank = 3/3  -> controllable
+  v_r=0.00, w_r=0.5:  rank = 3/3  -> controllable
+  v_r=0.00, w_r=0.0:  rank = 2/3  -> NOT controllable
+  => at standstill the lateral error cannot be corrected (non-holonomic);
+     this is why the LQR is linearised at v_r >= V_FLOOR = 0.03 m/s.
+  LQR gain at v_r=0.15, w_r=0:
+[[ 3.162e+00 -5.277e-18 -5.902e-17]
+ [-1.180e-16  6.325e+00  2.428e+00]]
+  closed-loop poles: [-3.162+0.j -1.939+0.j -0.489+0.j]
+
+=== Local observability of the EKF model along the docking approach ===
+  odometry only (no exteroceptive measurement)     rank 0/3   singular values [0.]
+  range + bearing, robot stationary                rank 2/3   singular values [1.647e+01 1.265e+01 1.009e-14]
+  range + bearing, robot moving                    rank 2/3   singular values [5.415e+01 1.266e+01 2.344e-05]
+  range + bearing + marker yaw (pose), stationary  rank 3/3   singular values [19.785 12.648  6.304]
+
+  range+bearing unobservable direction  [-0.038 -0.8    0.599]
+  rotation of the robot about the marker [-0.038 -0.8    0.599]
+  => range and bearing to ONE point landmark cannot tell the robot apart from the same
+     pose rotated about that landmark. The symmetry holds for any trajectory, so
+     moving does not fix it (rank stays 2). An EKF linearised at its own changing
+     estimate can wrongly 'see' this direction as observable, which is a known cause
+     of overconfidence. Measuring the marker's orientation too (pose measurement)
+     removes the symmetry, which is why MEAS_MODEL = 'pose'.
