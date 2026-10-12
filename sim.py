@@ -1,8 +1,4 @@
-"""MuJoCo simulation wrapper: loads the room, steps physics, applies disturbances.
 
-The simulator owns the true state. Nothing in here hands the true pose to the
-estimator or controller; that is done only by groundtruth.py for evaluation.
-"""
 import os
 import numpy as np
 import mujoco
