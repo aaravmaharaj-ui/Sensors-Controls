@@ -1,5 +1,4 @@
-"""Demo-video recorder: scene view + onboard camera inset on the left, live map
-of estimate (with 3σ ellipse) against truth on the right."""
+
 import numpy as np
 import cv2
 import imageio.v2 as imageio
