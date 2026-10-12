@@ -1,9 +1,4 @@
-"""The brief: 'the controller must use the estimated state, never ground truth'.
-This test fails if the estimator, controller, sensors or path planner import the
-ground-truth module or read the simulator's true body pose directly.
 
-    python -m pytest tests
-"""
 import os
 import re
 
