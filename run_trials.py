@@ -1,9 +1,4 @@
-"""Repeated trials with varied conditions -> success rate and error statistics.
 
-    python run_trials.py --n 20                      # random start poses
-    python run_trials.py --n 20 --wheel-err 0.02     # plus a 2% wheel-size error
-    python run_trials.py --n 20 --push               # plus a random sideways shove
-"""
 import argparse
 import json
 import os
