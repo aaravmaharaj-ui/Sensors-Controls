@@ -1,13 +1,4 @@
-"""Run one end-to-end trial and save a summary figure, metrics and (optionally) a video.
 
-Examples
-    python run_demo.py                          # nominal run -> results/nominal/
-    python run_demo.py --viewer                 # watch it live in the MuJoCo viewer
-    python run_demo.py --video                  # also record results/<name>/demo.mp4
-    python run_demo.py --name pushed --push 9 0 3 0.3       # shove sideways at t = 9 s
-    python run_demo.py --name bad_wheel --wheel-err 0.03    # right wheel 3% larger than odometry thinks
-    python run_demo.py --meas range_bearing     # EKF without the marker-yaw measurement
-"""
 import argparse
 import json
 import os
