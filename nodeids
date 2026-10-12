@@ -1,4 +1,0 @@
-[
-  "tests/test_no_ground_truth.py::test_estimator_and_controller_never_touch_ground_truth",
-  "tests/test_no_ground_truth.py::test_run_loop_uses_truth_only_for_evaluation"
-]
