@@ -49,24 +49,22 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
     for k in range(n_steps):
         t = k * C.DT
 
-        # ---- 1. Proprioception: encoders -> odometry -> EKF predict
         ticks = enc.read()
         ds, dth = odometry(ticks - ticks_prev)
         ticks_prev = ticks
         ekf.predict(ds, dth)
 
-        # ---- 2. Exteroception: ArUco camera -> EKF update (10 Hz)
         z, accepted, nis = None, False, np.nan
         if k % C.CAM_EVERY == 0:
             z = cam.measure()
             if z is not None:
                 accepted, nis = ekf.update(z)
 
-        # ---- 3. LiDAR safety layer
+
         scan = lidar.scan()
         front = lidar.front_min(scan)
 
-        # ---- 4. Control on the ESTIMATED state
+
         ref = path.at(t)
         v, w, e = ctrl(ekf.x, ref)
         safety = front < C.SAFETY_DIST and v > 0
@@ -74,7 +72,7 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
             v = 0.0
         sim.step(*wheel_speeds(v, w))
 
-        # ---- EVALUATION ONLY: ground truth for logging, never fed back
+
         x_true = groundtruth.true_pose(sim)
 
         for key, val in zip(L.keys(), [t, ekf.x.copy(), ekf.P.copy(), x_true, ref, [v, w], e,
@@ -90,15 +88,15 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
             if not view.is_running():
                 break
             if k % 2 == 0:
-                overlay.update(L)
+                overlay.update(L, scan)
             view.sync()
-            # run at real-time speed so you can watch it
+
             lag = (k + 1) * C.DT - (time.perf_counter() - t_wall0)
             if lag > 0:
                 time.sleep(lag)
 
     if view is not None:
-        # keep the window open until you are done looking (the viewer draws on its own thread)
+
         print("Run finished. Press Enter in this terminal to close the viewer and see the results.")
         try:
             input()

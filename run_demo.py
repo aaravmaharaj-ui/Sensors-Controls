@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import time
 import numpy as np
 
 from tb3dock.run import run_trial
@@ -19,7 +20,21 @@ if __name__ == "__main__":
     ap.add_argument("--meas", choices=["pose", "range_bearing"], default="pose")
     ap.add_argument("--video", action="store_true")
     ap.add_argument("--viewer", action="store_true")
+    ap.add_argument("--random", action="store_true",
+                    help="randomise start pose, sensor noise, wheel size error and a sideways kick")
     a = ap.parse_args()
+
+    if a.random:
+        a.seed = int(time.time() * 1000) % 100000
+        r = np.random.default_rng(a.seed)
+        a.wheel_err = float(np.round(r.uniform(-0.005, 0.005), 4))
+        a.push = [float(np.round(r.uniform(18, 21), 1)), 0.0,
+                  float(np.round(r.choice([-1, 1]) * r.uniform(3, 5), 1)), 0.2]
+        if a.name == "nominal":
+            a.name = f"random_{a.seed}"
+        print(f"Random trial: seed {a.seed} (start pose + sensor noise), "
+              f"right wheel {100 * a.wheel_err:+.2f}% size error, "
+              f"kick {a.push[2]:+.1f} N sideways at t = {a.push[0]} s")
 
     out = os.path.join(ROOT, "results", a.name)
     os.makedirs(out, exist_ok=True)
