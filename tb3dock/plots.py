@@ -9,7 +9,8 @@ from . import config as C
 from .sensors import wrap
 
 
-DEFAULT_OBSTACLES = [("box", 1.0, 0.0, 0.2), ("cyl", 2.0, -0.6, 0.2), ("box", 2.1, 0.75, 0.15)]
+DEFAULT_OBSTACLES = [("box", 0.9, -0.15, 0.2), ("box", 1.6, 0.55, 0.15),
+                     ("cyl", 2.1, -0.35, 0.2), ("box", 2.35, 0.6, 0.15)]
 
 
 def draw_room(ax, obstacles=None):

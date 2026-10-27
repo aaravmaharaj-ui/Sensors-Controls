@@ -67,9 +67,10 @@ V_FLOOR = 0.03                        # linearise at >= this speed (model uncont
 # ---- Obstacle randomisation (--random-obstacles): centre x and y ranges [m] ----
 # Chosen so a route always exists and the dock approach (x > 2.6 m) stays clear.
 OBSTACLE_RANGES = {
-    "obs_box":  ((0.75, 1.30), (-0.50, 0.50)),
-    "obs_cyl":  ((1.55, 2.30), (-0.95, -0.30)),
-    "obs_box2": ((1.55, 2.35), (0.35, 1.05)),
+    "obs_box":  ((0.70, 1.20), (-0.50, 0.40)),
+    "obs_box2": ((1.40, 1.90), (0.30, 1.00)),
+    "obs_cyl":  ((1.75, 2.30), (-1.00, -0.35)),
+    "obs_box3": ((2.10, 2.40), (0.45, 1.00)),
 }
 
 # ---- LiDAR navigation (navigation.py) -----------------------------------------
@@ -98,16 +99,15 @@ V_REF = 0.15
 A_REF = 0.15
 START_POSE = np.array([0.0, 0.0, 0.0])
 WAYPOINTS = np.array([
-    # path keeps >= 0.27 m from the obstacle edges, so a few cm of estimate error
-    # cannot drive the robot into a corner before it first sees the marker
+    # hand-placed route for the default layout (used only with --nav fixed, for comparison).
+    # It keeps >= 0.22 m from every obstacle edge in models/room.xml.
     [0.00, 0.00],
-    [0.35, 0.08],
-    [0.70, 0.50],
-    [1.00, 0.60],
-    [1.40, 0.55],
-    [1.80, 0.25],
-    [2.20, 0.03],
-    [2.60, 0.00],
+    [0.40, 0.20],
+    [0.85, 0.35],
+    [1.25, 0.25],
+    [1.65, 0.10],
+    [2.20, 0.12],
+    [2.60, 0.02],
     [2.85, 0.00],
     [DOCK_TARGET[0], 0.00],
 ])

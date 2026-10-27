@@ -29,10 +29,12 @@
     <geom name="wall_w" type="box" pos="-0.65 0 .15" size=".05 1.6 .15" material="wall"/>
     <geom name="wall_e" type="box" pos="3.65 0 .15" size=".05 1.6 .15" material="wall"/>
 
-    <!-- Obstacles -->
-    <geom name="obs_box" type="box" pos="1.0 0 .15" size=".2 .2 .15" material="obst"/>
-    <geom name="obs_cyl" type="cylinder" pos="2.0 -0.6 .15" size=".2 .15" material="obst"/>
-    <geom name="obs_box2" type="box" pos="2.1 0.75 .15" size=".15 .15 .15" material="obst"/>
+    <!-- Obstacles: a slalom. The robot has to pass north of the first box, south of the
+         second, then thread the 0.6 m gap between the cylinder and the last box. -->
+    <geom name="obs_box" type="box" pos="0.9 -0.15 .15" size=".2 .2 .15" material="obst"/>
+    <geom name="obs_box2" type="box" pos="1.6 0.55 .15" size=".15 .15 .15" material="obst"/>
+    <geom name="obs_cyl" type="cylinder" pos="2.1 -0.35 .15" size=".2 .15" material="obst"/>
+    <geom name="obs_box3" type="box" pos="2.35 0.6 .15" size=".15 .15 .15" material="obst"/>
 
     <!-- Charging dock with ArUco marker (marker centre at x=3.3055, z=0.133) -->
     <body name="dock" pos="3.33 0 0">

@@ -22,7 +22,14 @@ def drive(sim, enc, v, w, seconds):
 
 
 def calibrate_odometry():
+    """Effective wheel radius from straight drives, effective track width from ARCS.
 
+    The track is calibrated on arcs (v = 0.15 m/s, |w| = 0.3 and 0.6 rad/s) rather than
+    spinning on the spot, because the wheels slip differently in the two cases and the
+    robot drives arcs when it navigates. A spin-in-place calibration left odometry
+    over-counting turns by ~5% on arcs, which drifted the heading ~25 deg on long
+    LiDAR-planned routes before the marker came into view.
+    """
     r_ratio, b_ratio = [], []
     # straight lanes along the north and south walls, clear of every obstacle layout
     for start in [(-0.45, 1.3, 0.0), (-0.45, -1.3, 0.0)]:
@@ -31,8 +38,8 @@ def calibrate_odometry():
         ds, _ = odometry(dt)
         r_ratio.append(np.hypot(*(p1[:2] - p0[:2])) / ds)
     # left and right arcs in the clear corners
-    for start, v, w, secs in [((0.3, -1.0, 0.0), 0.15, 0.3, 6.0), ((0.3, 1.0, 0.0), 0.15, -0.3, 6.0),
-                              ((0.0, -1.1, 0.0), 0.15, 0.6, 4.0), ((0.0, 1.1, 0.0), 0.15, -0.6, 4.0)]:
+    for start, v, w, secs in [((-0.3, -1.1, 0.0), 0.15, 0.3, 6.0), ((-0.3, 1.1, 0.0), 0.15, -0.3, 6.0),
+                              ((-0.3, -1.2, 0.0), 0.15, 0.6, 4.0), ((-0.3, 1.2, 0.0), 0.15, -0.6, 4.0)]:
         sim = Sim(start); enc = Encoders(sim)
         th, ticks, prev = [true_pose(sim)[2]], enc.read(), None
         dth_odom = 0.0
