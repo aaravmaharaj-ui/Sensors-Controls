@@ -3,7 +3,7 @@ import os
 import re
 
 PKG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tb3dock")
-MUST_NOT_USE_TRUTH = ["ekf.py", "controller.py", "path.py"]
+MUST_NOT_USE_TRUTH = ["ekf.py", "controller.py", "path.py", "navigation.py"]
 FORBIDDEN = [r"groundtruth", r"true_pose", r"\.xpos", r"\.xquat", r"qpos\[0", r"qpos\[3"]
 
 

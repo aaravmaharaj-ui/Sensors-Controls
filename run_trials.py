@@ -14,9 +14,14 @@ if __name__ == "__main__":
     ap.add_argument("--wheel-err", type=float, default=0.0)
     ap.add_argument("--push", action="store_true")
     ap.add_argument("--meas", choices=["pose", "range_bearing"], default="pose")
+    ap.add_argument("--random-obstacles", action="store_true",
+                    help="move the obstacles to random positions (the robot is not told)")
+    ap.add_argument("--nav", choices=["lidar", "fixed"], default="lidar",
+                    help="lidar: plan the route from the LiDAR map; fixed: hand-placed waypoints")
     ap.add_argument("--name", default=None)
     a = ap.parse_args()
-    name = a.name or f"trials_we{a.wheel_err}_push{int(a.push)}_{a.meas}"
+    name = a.name or (f"trials_{a.nav}_we{a.wheel_err}_push{int(a.push)}_{a.meas}"
+                      + ("_randobs" if a.random_obstacles else ""))
 
     rows = []
     for seed in range(100, 100 + a.n):
@@ -26,7 +31,7 @@ if __name__ == "__main__":
             ang = rng.uniform(0, 2 * np.pi); f = rng.uniform(2, 4)
             push = (rng.uniform(3, 18), f * np.cos(ang), f * np.sin(ang), 0.3)
         _, m = run_trial(seed=seed, push=push, wheel_radius_err=a.wheel_err,
-                         meas_model=a.meas, verbose=False)
+                         meas_model=a.meas, nav_mode=a.nav, random_obstacles=a.random_obstacles, verbose=False)
         m["seed"] = seed
         rows.append(m)
         print(f"seed {seed}: {'OK  ' if m['dock_success'] else 'FAIL'} "

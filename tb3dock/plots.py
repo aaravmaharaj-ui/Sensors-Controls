@@ -1,5 +1,4 @@
-"""Figures for the project page: map with estimate, truth and 3-sigma ellipses;
-estimation error with 3-sigma bounds; control inputs; NEES."""
+
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -10,11 +9,17 @@ from . import config as C
 from .sensors import wrap
 
 
-def draw_room(ax):
+DEFAULT_OBSTACLES = [("box", 1.0, 0.0, 0.2), ("cyl", 2.0, -0.6, 0.2), ("box", 2.1, 0.75, 0.15)]
+
+
+def draw_room(ax, obstacles=None):
+    """obstacles: list of (kind, x, y, half-size) from Sim.obstacles; None = default layout."""
     ax.add_patch(Rectangle((-0.6, -1.6), 4.2, 3.2, fill=False, lw=2, ec="0.3"))
-    ax.add_patch(Rectangle((0.8, -0.2), 0.4, 0.4, color="#8059bf", alpha=.8))
-    ax.add_patch(Circle((2.0, -0.6), 0.2, color="#8059bf", alpha=.8))
-    ax.add_patch(Rectangle((1.95, 0.6), 0.3, 0.3, color="#8059bf", alpha=.8))
+    for kind, x, y, h in (DEFAULT_OBSTACLES if obstacles is None else obstacles):
+        if kind == "cyl":
+            ax.add_patch(Circle((x, y), h, color="#8059bf", alpha=.8))
+        else:
+            ax.add_patch(Rectangle((x - h, y - h), 2 * h, 2 * h, color="#8059bf", alpha=.8))
     ax.add_patch(Rectangle((3.31, -0.15), 0.04, 0.3, color="#3366cc"))
     ax.plot(*C.MARKER_POS, "ks", ms=6)
     ax.annotate("ArUco dock", C.MARKER_POS, (2.75, -0.45), fontsize=8,
@@ -35,7 +40,11 @@ def summary_figure(log, m, path):
     gs = fig.add_gridspec(3, 2, width_ratios=[1.35, 1])
 
     ax = fig.add_subplot(gs[:, 0])
-    draw_room(ax)
+    draw_room(ax, log.get("obstacles"))
+    if "occ" in log:       # the robot's LiDAR map at the end of the run
+        ax.imshow(np.where(log["occ"], 1.0, np.nan), origin="lower", cmap="Greys", vmin=0, vmax=1.3,
+                  extent=log["occ_extent"], interpolation="nearest", zorder=2)
+        ax.plot([], [], "s", color="0.3", ms=6, label="LiDAR map (occupied)")
     ax.plot(*log["path_xy"].T, "k--", lw=1, label="reference")
     ax.plot(xt[:, 0], xt[:, 1], color="#2a9d55", lw=2, label="true (eval only)")
     ax.plot(xe[:, 0], xe[:, 1], color="#1f5fbf", lw=1.3, label="EKF estimate")

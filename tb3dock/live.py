@@ -47,13 +47,18 @@ class LiveOverlay:
     def _map_image(self, L, scan=None):
         ax = self.ax
         ax.clear()
-        draw_room(ax)
+        draw_room(ax, getattr(self, "obstacles", None))
+        g = getattr(self, "grid", None)
+        if g is not None:      # the robot's own LiDAR map: occupied cells in dark grey
+            ax.imshow(np.where(g.occupied(), 1.0, np.nan), origin="lower", cmap="Greys",
+                      vmin=0, vmax=1.3, extent=[g.x0, g.x0 + g.nx * g.res, g.y0, g.y0 + g.ny * g.res],
+                      interpolation="nearest", zorder=2)
         xe, xt = np.array(L["x_est"]), np.array(L["x_true"])
         ax.plot(*self.ref_xy.T, "k--", lw=.8)
         ax.plot(xt[:, 0], xt[:, 1], color="#2a9d55", lw=2, label="true (eval only)")
         ax.plot(xe[:, 0], xe[:, 1], color="#1f5fbf", lw=1.2, label="EKF estimate")
         if scan is not None:      # LiDAR hits drawn where the robot THINKS it is
-            hit = scan < C.LIDAR_MAX - 1e-3
+            hit = scan < C.LIDAR_MAX - 0.05
             x, y, th = xe[-1]
             ax.scatter(x + scan[hit] * np.cos(th + self.angles[hit]),
                        y + scan[hit] * np.sin(th + self.angles[hit]),

@@ -32,7 +32,12 @@ class Recorder:
 
         ax = self.ax
         ax.clear()
-        draw_room(ax)
+        draw_room(ax, getattr(self, "obstacles", None))
+        g = getattr(self, "grid", None)
+        if g is not None:      # the robot's own LiDAR map: occupied cells in dark grey
+            ax.imshow(np.where(g.occupied(), 1.0, np.nan), origin="lower", cmap="Greys",
+                      vmin=0, vmax=1.3, extent=[g.x0, g.x0 + g.nx * g.res, g.y0, g.y0 + g.ny * g.res],
+                      interpolation="nearest", zorder=2)
         xe, xt = np.array(L["x_est"]), np.array(L["x_true"])
         ax.plot(*self.ref_xy.T, "k--", lw=.8)
         ax.plot(xt[:, 0], xt[:, 1], color="#2a9d55", lw=2, label="true")

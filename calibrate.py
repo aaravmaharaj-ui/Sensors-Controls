@@ -22,20 +22,30 @@ def drive(sim, enc, v, w, seconds):
 
 
 def calibrate_odometry():
+
     r_ratio, b_ratio = [], []
-    for trial in range(3):
-        sim = Sim((0, 0, 0)); enc = Encoders(sim)
+    # straight lanes along the north and south walls, clear of every obstacle layout
+    for start in [(-0.45, 1.3, 0.0), (-0.45, -1.3, 0.0)]:
+        sim = Sim(start); enc = Encoders(sim)
         dt, p0, p1 = drive(sim, enc, 0.15, 0.0, 6.0)
         ds, _ = odometry(dt)
         r_ratio.append(np.hypot(*(p1[:2] - p0[:2])) / ds)
-        sim = Sim((0, 0, 0)); enc = Encoders(sim)
-        dt, p0, p1 = drive(sim, enc, 0.0, 1.0, 2 * np.pi / 1.0 * 2)  # ~2 turns
-        _, dth = odometry(dt)
-        # unwrap true rotation using the odometry estimate as a guide
-        true_dth = dth + wrap((p1[2] - p0[2]) - dth)
-        b_ratio.append(dth / true_dth)
+    # left and right arcs in the clear corners
+    for start, v, w, secs in [((0.3, -1.0, 0.0), 0.15, 0.3, 6.0), ((0.3, 1.0, 0.0), 0.15, -0.3, 6.0),
+                              ((0.0, -1.1, 0.0), 0.15, 0.6, 4.0), ((0.0, 1.1, 0.0), 0.15, -0.6, 4.0)]:
+        sim = Sim(start); enc = Encoders(sim)
+        th, ticks, prev = [true_pose(sim)[2]], enc.read(), None
+        dth_odom = 0.0
+        for _ in range(int(secs / C.DT)):
+            sim.step(*wheel_speeds(v, w))
+            t2 = enc.read()
+            dth_odom += odometry(t2 - ticks)[1]
+            ticks = t2
+            th.append(true_pose(sim)[2])
+        true_dth = np.unwrap(th)[-1] - th[0]
+        b_ratio.append(dth_odom / true_dth)
     r_eff = C.ODOM_R_EFF * np.mean(r_ratio)
-    # dth_odom = r*(dr-dl)/b ; correct radius first, then track
+    # dth_odom = r*(dr-dl)/b: correct the radius first, then the track
     b_eff = C.ODOM_TRACK_EFF * np.mean(b_ratio) * np.mean(r_ratio)
     return float(r_eff), float(b_eff)
 

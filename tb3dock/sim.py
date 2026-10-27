@@ -12,8 +12,7 @@ MARKER_PNG = os.path.join(ROOT, "assets", "aruco_0.png")
 
 
 def make_marker_texture(path=MARKER_PNG, px=200, border=40):
-    """Write ArUco DICT_4X4_50 id 0 with a white border.
-    Black square = 200 px of 280 px, so on the 0.14 m plate it is 0.10 m wide."""
+ 
     if os.path.exists(path):
         return
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -28,7 +27,7 @@ def yaw_to_quat(yaw):
 
 
 class Sim:
-    def __init__(self, start_pose=C.START_POSE, wheel_radius_err=0.0):
+    def __init__(self, start_pose=C.START_POSE, wheel_radius_err=0.0, obstacle_rng=None):
         make_marker_texture()
         self.m = mujoco.MjModel.from_xml_path(MODEL_PATH)
         self.d = mujoco.MjData(self.m)
@@ -40,6 +39,15 @@ class Sim:
             gid = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_GEOM, "wheel_r")
             self.m.geom_size[gid][0] *= 1.0 + wheel_radius_err
 
+        # Randomise where the obstacles are (the robot is never told)
+        if obstacle_rng is not None:
+            for name, (xr, yr) in C.OBSTACLE_RANGES.items():
+                gid = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_GEOM, name)
+                if gid < 0:          # this room has no obstacle by that name: skip it
+                    continue
+                self.m.geom_pos[gid][:2] = [obstacle_rng.uniform(*xr), obstacle_rng.uniform(*yr)]
+        self.obstacles = self._obstacle_list()
+
         x, y, yaw = start_pose
         self.d.qpos[0:3] = [x, y, 0.034]
         self.d.qpos[3:7] = yaw_to_quat(yaw)
@@ -48,6 +56,17 @@ class Sim:
         for _ in range(100):
             mujoco.mj_step(self.m, self.d)
         self.push = None   # (force_xy, t_end)
+
+    def _obstacle_list(self):
+        """(kind, x, y, half-size or radius) of each obstacle, for drawing the room."""
+        out = []
+        for name in C.OBSTACLE_RANGES:
+            gid = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_GEOM, name)
+            if gid < 0:
+                continue
+            kind = "cyl" if self.m.geom_type[gid] == mujoco.mjtGeom.mjGEOM_CYLINDER else "box"
+            out.append((kind, *self.m.geom_pos[gid][:2], self.m.geom_size[gid][0]))
+        return out
 
     @property
     def time(self):

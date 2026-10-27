@@ -10,7 +10,7 @@ def wrap(a):
     return (a + np.pi) % (2 * np.pi) - np.pi
 
 
-#encoders
+# ---------------------------------------------------------------- encoders ---
 class Encoders:
     def __init__(self, sim):
         self.sim = sim
@@ -19,19 +19,19 @@ class Encoders:
                     for n in ("wheel_l", "wheel_r")]
 
     def read(self):
-        """Integer tick counts (quantised like the XL430 encoder)."""
+    
         ang = self.sim.d.qpos[self.adr]
         return np.round(ang / (2 * np.pi) * C.TICKS_PER_REV).astype(np.int64)
 
 
 def odometry(dticks):
-    """Tick increments -> (distance travelled ds, heading change dth)."""
+
     dphi = dticks * 2 * np.pi / C.TICKS_PER_REV
     dl, dr = C.ODOM_R_EFF * dphi
     return (dl + dr) / 2.0, (dr - dl) / C.ODOM_TRACK_EFF
 
 
-#LiDAR 
+# ------------------------------------------------------------------- LiDAR ---
 class Lidar:
     def __init__(self, sim, rng):
         self.sim, self.rng = sim, rng
@@ -48,17 +48,19 @@ class Lidar:
             vec = R @ np.array([np.cos(a), np.sin(a), 0.0])
             dist = mujoco.mj_ray(m, d, origin, vec, self.group, 1, b, self._gid)
             ranges[i] = dist if 0 <= dist < C.LIDAR_MAX else C.LIDAR_MAX
-        ranges += self.rng.normal(0, C.LIDAR_SIGMA, C.LIDAR_N)
+        # noise only on real returns: a beam that hit nothing reads exactly LIDAR_MAX,
+        # like the real LDS, so it is never mistaken for an obstacle at 3.49 m
+        hit = ranges < C.LIDAR_MAX
+        ranges[hit] += self.rng.normal(0, C.LIDAR_SIGMA, hit.sum())
         return np.clip(ranges, 0.0, C.LIDAR_MAX)
 
     def front_min(self, ranges):
         return ranges[np.abs(self.angles) < C.SAFETY_CONE].min()
 
 
-#ArUco camera
+# ---------------------------------------------------------- ArUco camera ---
 def camera_matrix():
-    """Pinhole intrinsics. In sim these follow from the field of view; on the
-    real robot replace them with a checkerboard calibration (cv2.calibrateCamera)."""
+    
     f = (C.CAM_H / 2) / np.tan(np.deg2rad(C.CAM_FOVY) / 2)
     return np.array([[f, 0, C.CAM_W / 2], [0, f, C.CAM_H / 2], [0, 0, 1.0]])
 
@@ -77,8 +79,7 @@ class ArucoCamera:
         self.last_image = None
 
     def measure(self):
-        """Render, detect the marker and return z = [range, bearing, marker_yaw]
-        in the robot frame (camera at CAM_X ahead of the axle), or None."""
+        
         self.renderer.update_scene(self.sim.d, camera="cam")
         rgb = self.renderer.render()
         gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)

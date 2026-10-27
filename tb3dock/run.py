@@ -8,30 +8,39 @@ from .sensors import Encoders, Lidar, ArucoCamera, odometry, wrap
 from .ekf import EKF
 from .controller import LQRTracker, wheel_speeds
 from .path import RefPath
+from .navigation import Navigator
 from . import groundtruth   # EVALUATION ONLY
 
 
 def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
-              meas_model=C.MEAS_MODEL, video=None, viewer=False, settle_time=5.0, verbose=True):
-    """
-    seed             random seed (start pose, sensor noise)
-    start_noise      randomise the TRUE start pose around the nominal one (P0_STD)
-    push             (time_s, force_x, force_y, duration_s) external shove, or None
-    wheel_radius_err real right wheel radius error, e.g. 0.02 = 2% (odometry is not told)
-    video            path to an .mp4 to record, or None
-    """
+              meas_model=C.MEAS_MODEL, video=None, viewer=False, settle_time=5.0, verbose=True,
+              nav_mode=C.NAV_MODE, random_obstacles=False):
+    
     rng = np.random.default_rng(seed)
     true_start = C.START_POSE + (rng.normal(0, C.P0_STD) if start_noise else 0.0)
-    sim = Sim(true_start, wheel_radius_err)
+    sim = Sim(true_start, wheel_radius_err,
+              obstacle_rng=np.random.default_rng(seed + 7919) if random_obstacles else None)
     enc, lidar, cam = Encoders(sim), Lidar(sim, rng), ArucoCamera(sim, rng)
     ekf = EKF(C.START_POSE, np.diag(C.P0_STD ** 2), meas_model)   # filter only knows the nominal start
     ctrl = LQRTracker()
-    path = RefPath(C.WAYPOINTS, C.V_REF, C.A_REF)
+    nav = None
+    if nav_mode == "lidar":
+        # look around before moving: map from 3 scans, then plan the first route
+        nav = Navigator()
+        for _ in range(3):
+            nav.grid.update(ekf.x, lidar.scan())
+        if not nav.plan(ekf.x, 0.0, "initial plan from first scans"):
+            raise RuntimeError("no route to the dock found in the first LiDAR map")
+        path = nav.path
+    else:
+        path = RefPath(C.WAYPOINTS, C.V_REF, C.A_REF)
 
     rec = None
     if video:
         from .video import Recorder
         rec = Recorder(video, cam, path)
+        rec.grid = nav.grid if nav else None
+        rec.obstacles = sim.obstacles
     view = None
     if viewer:
         import mujoco.viewer
@@ -39,8 +48,11 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
         print("MuJoCo viewer opened: the robot drives in real time (~30 s).")
         from .live import LiveOverlay
         overlay = LiveOverlay(view, cam, path)
+        overlay.grid = nav.grid if nav else None
+        overlay.obstacles = sim.obstacles
 
-    n_steps = int((path.T + settle_time) / C.DT)
+    n_steps = int(C.NAV_MAX_TIME / C.DT)
+    last_plan = 0.0
     ticks_prev = enc.read()
     L = {k: [] for k in ["t", "x_est", "P", "x_true", "ref", "u", "e_ctrl",
                          "meas", "accepted", "nis", "safety", "front"]}
@@ -49,30 +61,46 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
     for k in range(n_steps):
         t = k * C.DT
 
+        # ---- 1. Proprioception: encoders -> odometry -> EKF predict
         ticks = enc.read()
         ds, dth = odometry(ticks - ticks_prev)
         ticks_prev = ticks
         ekf.predict(ds, dth)
 
+        # ---- 2. Exteroception: ArUco camera -> EKF update (10 Hz)
         z, accepted, nis = None, False, np.nan
         if k % C.CAM_EVERY == 0:
             z = cam.measure()
             if z is not None:
                 accepted, nis = ekf.update(z)
 
-
+        # ---- 3. LiDAR: map the room, replan if the route is blocked, safety stop
         scan = lidar.scan()
         front = lidar.front_min(scan)
+        if nav is not None:
+            if k % C.NAV_MAP_EVERY == 0:
+                nav.grid.update(ekf.x, scan)        # placed with the ESTIMATED pose
+            check = k % int(round(C.NAV_CHECK_EVERY / C.DT)) == 0
+            approaching_dock = ekf.x[0] > C.NAV_PREDOCK[0] - 0.1
+            if (check and not approaching_dock and t - last_plan >= C.NAV_REPLAN_COOLDOWN
+                    and nav.blocked_ahead(ekf.x, t)):
+                if nav.plan(ekf.x, t, "route blocked by a newly mapped obstacle"):
+                    path, last_plan = nav.path, t
+                    if verbose:
+                        print(f"  t = {t:5.1f} s: replanned (plan {nav.n_plans})")
+                    for obj in (rec, overlay if view is not None else None):
+                        if obj is not None:
+                            obj.ref_xy = np.c_[path.x, path.y]
 
-
-        ref = path.at(t)
+        # ---- 4. Control on the ESTIMATED state
+        ref = nav.ref(t) if nav is not None else path.at(t)
         v, w, e = ctrl(ekf.x, ref)
         safety = front < C.SAFETY_DIST and v > 0
         if safety:
             v = 0.0
         sim.step(*wheel_speeds(v, w))
 
-
+        # ---- EVALUATION ONLY: ground truth for logging, never fed back
         x_true = groundtruth.true_pose(sim)
 
         for key, val in zip(L.keys(), [t, ekf.x.copy(), ekf.P.copy(), x_true, ref, [v, w], e,
@@ -84,19 +112,22 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
             sim.apply_push(push[1:3], push[3])
         if rec is not None and k % 2 == 0:
             rec.frame(sim, L)
+        t_end = (nav.t0 if nav is not None else 0.0) + path.T + settle_time
+        if t >= t_end:
+            break
         if view is not None:
             if not view.is_running():
                 break
             if k % 2 == 0:
                 overlay.update(L, scan)
             view.sync()
-
+            # run at real-time speed so you can watch it
             lag = (k + 1) * C.DT - (time.perf_counter() - t_wall0)
             if lag > 0:
                 time.sleep(lag)
 
     if view is not None:
-
+        # keep the window open until you are done looking (the viewer draws on its own thread)
         print("Run finished. Press Enter in this terminal to close the viewer and see the results.")
         try:
             input()
@@ -109,9 +140,15 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
         rec.close()
     cam.renderer.close()
     log = {k: np.array(v) for k, v in L.items()}
-    log["T_path"] = path.T
+    log["T_path"] = (nav.t0 if nav is not None else 0.0) + path.T
     log["path_xy"] = np.c_[path.x, path.y]
+    log["obstacles"] = sim.obstacles
+    if nav is not None:
+        g = nav.grid
+        log["occ"] = g.occupied()
+        log["occ_extent"] = np.array([g.x0, g.x0 + g.nx * g.res, g.y0, g.y0 + g.ny * g.res])
     m = metrics(log)
+    m["n_plans"] = nav.n_plans if nav is not None else 0
     if verbose:
         print_metrics(m)
     return log, m
