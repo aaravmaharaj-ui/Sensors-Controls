@@ -32,54 +32,80 @@ The simulation demonstrates an integrated sensing, estimation and control pipeli
 
 ## Repository structure
 
-The repository is organised into the following directories and scripts:
-
 | Path | Purpose |
 | --- | --- |
-| `assets/` | Supporting assets used by the simulation. |
-| `models/` | Robot, environment or sensor model files. |
-| `results/` | Generated outputs, plots and experimental results. |
-| `tb3dock/` | Main project package for the TurtleBot3 docking and navigation system. |
-| `tests/` | Tests used to check project functionality. |
-| `analysis.py` | Analysis of simulation results and controller or estimator performance. |
-| `calibrate.py` | Sensor calibration utilities. |
-| `run_demo.py` | Entry point for running the demonstration. |
-| `run_trials.py` | Script for running repeated trials and evaluating performance. |
-| `requirements.txt` | Python dependencies required by the project. |
-
-The exact responsibilities of each module may be updated as the implementation develops.
+| `assets/` | ArUco marker texture (DICT_4X4_50, id 0) used on the dock. |
+| `models/room.xml` | MuJoCo model: the room, obstacles, dock and TurtleBot3 (wheels, camera, LiDAR mount). |
+| `results/` | Generated graphs, videos and trial results. |
+| `tests/test_no_ground_truth.py` | Checks that the EKF, controller, path and navigation code never read the simulator's true position. |
+| **`tb3dock/`** | **Main package** |
+| `tb3dock/config.py` | All parameters in one place (robot, sensors, noise values, LQR weights, mapping). |
+| `tb3dock/sim.py` | Runs the MuJoCo simulation; randomises obstacles; applies pushes. |
+| `tb3dock/sensors.py` | Wheel encoders and odometry, LiDAR, ArUco camera (OpenCV detection + solvePnP). |
+| `tb3dock/ekf.py` | Extended Kalman Filter with outlier rejection and recovery. |
+| `tb3dock/navigation.py` | LiDAR occupancy map, A* route planning and replanning. |
+| `tb3dock/path.py` | Smooth reference path with a speed profile. |
+| `tb3dock/controller.py` | LQR trajectory tracker. |
+| `tb3dock/run.py` | Main loop: sense → map → estimate → plan → control. |
+| `tb3dock/live.py` | Live camera and map panels in the MuJoCo viewer. |
+| `tb3dock/groundtruth.py` | True position, used **only** for evaluation. |
+| `run_demo.py` | Runs one demonstration (`--viewer`, `--random`, `--video`). |
+| `run_trials.py` | Runs repeated trials and summarises the results. |
+| `calibrate.py` | Calibrates the encoders and measures odometry and camera noise. |
+| `analysis.py` | Controllability and observability analysis. |
+| `requirements.txt` | Python dependencies. |
 
 ## System architecture
 
-The intended control pipeline is:
+The pipeline runs every 0.05 s (20 Hz):
 
-1. **Sensor measurements:** acquire wheel-encoder odometry, LiDAR scans and camera observations.
-2. **State prediction:** propagate the robot's estimated pose using the motion model and odometry.
-3. **State correction:** update the EKF estimate using available camera observations and their associated measurement model.
-4. **Trajectory tracking:** calculate control commands from the difference between the desired trajectory and the estimated robot state.
-5. **Robot motion:** apply the control commands to the simulated TurtleBot3.
-6. **Performance evaluation:** compare estimated and ground-truth states, analyse tracking errors and assess docking accuracy.
+1. **Sensor measurements:** read the wheel encoders (20 Hz), LiDAR scan (10 Hz) and camera image (10 Hz).
+2. **State prediction:** the EKF propagates the robot's pose using the motion model and encoder odometry.
+3. **State correction:** when the camera detects the ArUco marker, the EKF corrects the estimate using its range, bearing and angle. Readings that don't fit are rejected.
+4. **Mapping and planning:** LiDAR scans are added to an occupancy grid using the estimated pose. A* plans a route around the mapped obstacles and replans if a new obstacle blocks it.
+5. **Trajectory tracking:** the LQR controller calculates speed and turn-rate commands from the difference between the planned route and the estimated pose.
+6. **Robot motion:** the commands are sent to the wheels of the simulated TurtleBot3. The LiDAR stops the robot if anything comes within 17 cm in front.
 
-When camera observations are unavailable, the estimator should continue predicting the robot's state using the motion model and available odometry, with uncertainty increasing as appropriate until measurements become available again.
+When the marker is out of view, the EKF keeps predicting from odometry, and its uncertainty grows until the marker is seen again.
 
 ## Experimental evaluation
 
-The simulation will be evaluated using quantitative measures where applicable, including:
+All errors are measured against the simulator's true pose, which is used for evaluation only.
 
-- **Position estimation error:** difference between the estimated and ground-truth robot position.
-- **Heading estimation error:** difference between the estimated and ground-truth orientation.
-- **Trajectory tracking error:** lateral and heading deviation from the desired path.
-- **Docking accuracy:** final position and orientation relative to the charging station.
-- **Robustness:** changes in performance under sensor noise, missing observations and wheel-induced heading disturbances.
-- **Repeatability:** consistency of results across multiple simulation trials.
+### Normal run (`python run_demo.py`)
 
-Ground-truth simulator measurements are reserved for evaluation and are not fed into the controller.
+| Measure | Result |
+| --- | --- |
+| Docking accuracy | **1.8 cm, 3.0°** (tolerance 3 cm / 5°) |
+| Position estimation error (RMSE) | 5.2 cm overall; up to 10 cm on odometry alone, under 1 cm once the marker is seen |
+| Heading estimation error (RMSE) | 3.1° |
+| Trajectory tracking error (true path vs planned route) | 5.4 cm RMSE, 9.7 cm max |
+| Marker detections | 57 used, 4 rejected as outliers |
+| Mean NEES | 13.9 (expected ≈ 3, so the filter is overconfident; see Limitations) |
+| Closest obstacle in front | 19.6 cm, with no safety stops needed |
+
+### Repeated trials (`python run_trials.py`)
+
+| Condition | Docked | Mean dock error | Mean estimate RMSE |
+| --- | --- | --- | --- |
+| Normal, random start and noise (n = 20) | TBD | TBD | TBD |
+| Random pushes (n = 20) | TBD | TBD | TBD |
+| 1% wheel-size error (n = 20) | TBD | TBD | TBD |
+| Random obstacles, LiDAR planning (n = 8) | TBD | TBD | TBD |
+| Random obstacles, fixed route (n = 8) | TBD | TBD | TBD |
 
 ## Setup
 
-Clone the repository and navigate to its root directory.
+Requires **Python 3.10 or newer**. Tested on Windows 11 and Linux.
 
-Create and activate a Python virtual environment:
+Clone the repository:
+
+```bash
+git clone https://github.com/aaravmaharaj-ui/Sensors-Controls.git
+cd Sensors-Controls
+```
+
+Create and activate a virtual environment:
 
 **Windows (PowerShell)**
 
@@ -89,6 +115,8 @@ py -m venv .venv
 python -m pip install --upgrade pip
 ```
 
+If PowerShell blocks the activate script, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then try again.
+
 **macOS / Linux**
 
 ```bash
@@ -97,45 +125,39 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 ```
 
-Install the required dependencies:
+Install the dependencies (MuJoCo, OpenCV with ArUco, NumPy, SciPy, Matplotlib):
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-Use a Python version compatible with the dependencies specified in `requirements.txt`. Additional simulator or model setup may be required depending on the installed MuJoCo and project packages.
+No other setup is needed: MuJoCo installs through pip, and the room model and marker texture are included in the repository.
 
 ## Running the project
 
-Run the main demonstration from the repository root:
+Run all commands from the repository root with the virtual environment active.
 
 ```bash
+python run_demo.py --viewer
+python run_demo.py --random --viewer
 python run_demo.py
-```
-
-Run the experimental trials:
-
-```bash
-python run_trials.py
-```
-
-Analyse the generated results:
-
-```bash
+python run_trials.py --n 20
+python run_trials.py --n 20 --push
+python run_trials.py --n 20 --wheel-err 0.01
+python run_trials.py --n 8 --random-obstacles
+python run_trials.py --n 8 --random-obstacles --nav fixed
+python calibrate.py
 python analysis.py
+python -m pytest tests
 ```
-
-The scripts may require additional arguments or configuration depending on the current implementation. Refer to each script and update these instructions as the project develops.
 
 ## Testing
 
-Run the available tests from the repository root:
-
 ```bash
-python -m pytest
+python -m pytest tests
 ```
 
-Tests should be used to verify individual components and the integrated pipeline, including sensor processing, state estimation, controller behaviour and docking performance where corresponding tests are implemented.
+`tests/test_no_ground_truth.py` checks that the EKF, controller, path and navigation code never read the simulator's true position, so the controller only ever uses the estimated state.
 
 ## Team
 
@@ -148,8 +170,10 @@ Tests should be used to verify individual components and the integrated pipeline
 
 Responsibilities will be updated to reflect each team member's actual contributions.
 
-## Project status
+## Limitations and improvements
 
-This repository contains the initial project structure for the Sensors and Controls assignment. The README will be updated as the navigation pipeline is implemented, tested and evaluated.
-
-The final submission will document the system architecture, implementation, experimental results and limitations, with evidence demonstrating that the controller operates using the estimated state.
+- **Overconfident filter:** the mean NEES is 13.9, where about 3 is expected, so the EKF thinks it is more certain than it is. Increasing the odometry noise (process noise) would make its uncertainty more realistic.
+- **Late marker sighting:** the marker is only seen in the last third of the route, so the estimate drifts up to 10 cm on odometry alone. A second marker partway along, or matching LiDAR scans to the map, would correct it earlier.
+- **Cautious routes:** the planner keeps about 40 cm from obstacles, so the robot goes around the obstacle group instead of weaving between them. Lowering the clearance would give shorter routes but less safety margin.
+- **Close-range dropouts:** marker detection occasionally misses a frame within about 17 cm of the marker, so the last few centimetres rely mostly on odometry.
+- **Simulation only:** the system has not been tested on the real TurtleBot3. Real wheel slip, lighting and LiDAR reflections would need retuning.
