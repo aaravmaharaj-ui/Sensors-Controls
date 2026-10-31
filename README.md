@@ -243,28 +243,6 @@ The two failures with wheel-size error were near misses (3.8 cm and 6.2 cm, agai
 <img width="1690" height="1040" alt="summary" src="https://github.com/user-attachments/assets/ced791a3-0a35-4d5c-a517-5e4641ec1816" />
 
 
-### Normal run (`python run_demo.py`)
-
-| Measure | Result |
-| --- | --- |
-| Docking accuracy | **1.8 cm, 3.0°** (tolerance 3 cm / 5°) |
-| Position estimation error (RMSE) | 5.2 cm overall; up to 10 cm on odometry alone, under 1 cm once the marker is seen |
-| Heading estimation error (RMSE) | 3.1° |
-| Trajectory tracking error (true path vs planned route) | 5.4 cm RMSE, 9.7 cm max |
-| Marker detections | 57 used, 4 rejected as outliers |
-| Mean NEES | 13.9 (expected ≈ 3, so the filter is overconfident; see Limitations) |
-| Closest obstacle in front | 19.6 cm, with no safety stops needed |
-
-### Repeated trials (`python run_trials.py`)
-
-| Condition | Docked | Mean dock error | Mean estimate RMSE |
-| --- | --- | --- | --- |
-| Normal, random start and noise (n = 20) | TBD | TBD | TBD |
-| Random pushes (n = 20) | TBD | TBD | TBD |
-| 1% wheel-size error (n = 20) | TBD | TBD | TBD |
-| Random obstacles, LiDAR planning (n = 8) | TBD | TBD | TBD |
-| Random obstacles, fixed route (n = 8) | TBD | TBD | TBD |
-
 ## Setup
 
 Requires **Python 3.10 or newer**. Tested on Windows 11 and Linux.
@@ -319,7 +297,6 @@ python run_trials.py --n 8 --random-obstacles
 python run_trials.py --n 8 --random-obstacles --nav fixed
 python calibrate.py
 python analysis.py
-python -m pytest tests
 ```
 
 ## Testing
