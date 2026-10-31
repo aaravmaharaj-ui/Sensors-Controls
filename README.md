@@ -150,6 +150,8 @@ We also fitted the odometry noise ($\sigma_s = 0.12|\Delta s|$, $\sigma_\theta =
 
 Because the map uses the estimated pose, estimate errors show up as small shifts in the map. Compared with the real obstacles, the median error of the mapped cells is 2.5 cm (right graph).
 
+<img width="428" height="197" alt="image" src="https://github.com/user-attachments/assets/3f1f7278-1318-42c9-88ec-20814605e27c" />
+
 ---
 
 ## C. Estimation
@@ -325,3 +327,6 @@ Responsibilities will be updated to reflect each team member's actual contributi
 - **Cautious routes:** the planner keeps about 40 cm from obstacles, so the robot goes around the obstacle group instead of weaving between them. Lowering the clearance would give shorter routes but less safety margin.
 - **Close-range dropouts:** marker detection occasionally misses a frame within about 17 cm of the marker, so the last few centimetres rely mostly on odometry.
 - **Simulation only:** the system has not been tested on the real TurtleBot3. Real wheel slip, lighting and LiDAR reflections would need retuning.
+
+## Video Link
+
