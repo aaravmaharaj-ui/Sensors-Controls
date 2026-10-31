@@ -124,7 +124,7 @@ With just range and bearing to one marker, the robot could be anywhere on a circ
 
 ## B. Sensing
 
-![Sensor performance](results/sensor_proof.png)
+<img width="2210" height="676" alt="sensor_proof (1)" src="https://github.com/user-attachments/assets/6bde4998-e697-450f-8c9a-d437c7a2e5b0" />
 
 ### Calibration
 `calibrate.py` compares the sensors against the simulator's true motion, like checking a real robot with a tape measure.
@@ -154,7 +154,7 @@ Because the map uses the estimated pose, estimate errors show up as small shifts
 
 ## C. Estimation
 
-![EKF error](results/ekf_error.png)
+<img width="1500" height="675" alt="ekf_error (2)" src="https://github.com/user-attachments/assets/745fa3b8-2191-404b-b112-e895a59d987a" />
 
 We used an EKF to estimate $[x, y, \theta]$ at 20 Hz.
 
@@ -183,7 +183,8 @@ In the graph, the uncertainty (light blue) keeps growing while the robot only ha
 
 ## D. Control
 
-![Control](results/control.png)
+<img width="2100" height="700" alt="control" src="https://github.com/user-attachments/assets/6b55dae0-0b7d-4bc9-81a1-53166d02ce89" />
+
 
 We used an LQR on the tracking-error model from A. It minimises
 
@@ -233,7 +234,8 @@ Results from `run_trials.py`:
 | Random obstacles, LiDAR planning (n = 8) | TBD | TBD | TBD |
 | Random obstacles, fixed route (n = 8) | TBD | TBD | TBD |
 
-![Normal run](results/nominal/summary.png)
+<img width="1690" height="1040" alt="summary" src="https://github.com/user-attachments/assets/ced791a3-0a35-4d5c-a517-5e4641ec1816" />
+
 
 The last two rows compare our LiDAR planning with a fixed hand-placed route when the obstacles move.
 
