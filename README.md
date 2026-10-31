@@ -150,7 +150,8 @@ We also fitted the odometry noise ($\sigma_s = 0.12|\Delta s|$, $\sigma_\theta =
 
 Because the map uses the estimated pose, estimate errors show up as small shifts in the map. Compared with the real obstacles, the median error of the mapped cells is 2.5 cm (right graph).
 
-<img width="428" height="197" alt="image" src="https://github.com/user-attachments/assets/3f1f7278-1318-42c9-88ec-20814605e27c" />
+<img width="2100" height="868" alt="frames" src="https://github.com/user-attachments/assets/6283a9ce-9f02-4250-83af-867e3863e5e4" />
+
 
 ---
 
