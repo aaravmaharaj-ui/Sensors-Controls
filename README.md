@@ -2,35 +2,33 @@
 
 ## Overview
 
-**Visual Waypoint Navigation** is a simulated mobile robotics project for the 41014/42043 Sensors and Controls assignment. The project integrates sensing, state estimation and feedback control to navigate a TurtleBot3 through an indoor environment containing obstacles and a central shelving island.
+**Visual Waypoint Navigation** is a simulated mobile robotics project for 41014/42043 Sensors and Control in Mechatronics Systems (Track A). The project integrates sensing, state estimation and feedback control to navigate a TurtleBot3 Burger through an indoor room containing four obstacles: three boxes and a cylinder.
 
-The robot operates in MuJoCo using a 2D LiDAR sensor, a camera and wheel-encoder odometry. It must follow a route around the environment and visually dock at a charging station identified by an ArUco marker.
+The robot operates in MuJoCo using a 2D LiDAR sensor, a camera and wheel-encoder odometry. It plans a route around the obstacles and visually docks at a charging station identified by an ArUco marker.
 
-The project focuses on developing and integrating the following components:
+The project develops and integrates the following components:
 
-1. **Sensing:** use LiDAR to detect obstacles and the surrounding environment, and camera measurements to identify and localise the ArUco-marked charging station.
-2. **State estimation:** implement an Extended Kalman Filter (EKF) to estimate the robot's pose by fusing wheel-encoder odometry with camera-based range and bearing or pose measurements.
-3. **Path following:** develop a state-space model of the mobile robot and implement a state-feedback or Linear Quadratic Regulator (LQR) controller to track the desired trajectory.
-4. **Visual docking:** approach and align with the charging station using camera-based observations of the ArUco marker.
-5. **Robustness testing:** evaluate navigation performance under sensor noise, intermittent anchor or landmark visibility, and wheel-induced heading disturbances, where applicable to the implemented system.
+1. **Sensing:** the LiDAR maps the obstacles and walls, and the camera detects the ArUco marker with OpenCV to measure its distance, direction and angle. The encoders were calibrated and the camera’s noise was measured.
+2. **State estimation:** an Extended Kalman Filter (EKF) estimates the robot's pose by fusing wheel-encoder odometry with the marker's range, bearing and angle from the camera.
+3. **Path following:** a state-space model of the robot and a Linear Quadratic Regulator (LQR) controller track the planned route.
+4. **Visual docking:** the robot approaches and aligns with the charging station using the camera's view of the ArUco marker, docking within 3 cm and 5° tolerance (1.8 cm and 3 degrees in the normal run).
+5. **Robustness testing:** performance was tested under sensor noise, randomised obstacle positions, sideways pushes, wheel-size errors and periods when the marker is out of view.
 
-A key requirement is that the controller uses the **estimated robot state rather than ground-truth simulator data**. Ground-truth data may be used for evaluation and comparison, but not as an input to the controller.
+A key requirement is that the controller uses the **estimated robot state rather than ground-truth simulator data**. Ground-truth data is only used for evaluation and comparison, never as an input to the controller. This is checked automatically by `tests/test_no_ground_truth.py`.
 
-## Project requirements
+## Project Requirements met
 
-The compulsory simulation must demonstrate an integrated sensing, estimation and control pipeline.
+The simulation demonstrates an integrated sensing, estimation and control pipeline.
 
-| Component | Objective |
+| Component | How we met it |
 | --- | --- |
-| Environment | Simulate indoor navigation with obstacles in MuJoCo. |
-| Robot platform | Use a TurtleBot3 with 2D LiDAR, camera and wheel-encoder odometry. |
-| State-space model | Develop a mathematical model of the robot's motion. |
-| State estimation | Fuse odometry and camera measurements using an EKF. |
-| Trajectory tracking | Implement state-feedback or LQR control using the estimated state. |
-| Visual docking | Navigate to and align with an ArUco-marked charging station. |
-| Evaluation | Quantitatively assess tracking, estimation and docking performance. |
-
-Hardware implementation is optional and is not required for Distinction-level achievement. The simulation remains compulsory regardless of whether a hardware demonstration is undertaken.
+| Environment | MuJoCo room (4.2 × 3.2 m) with three boxes and a cylinder; obstacle positions can be randomised. |
+| Robot platform | TurtleBot3 Burger with a 180-beam 2D LiDAR, a 640×480 camera at 10 Hz and 4096-tick wheel encoders. |
+| State-space model | Unicycle model of position and heading, plus a tracking-error model, with controllability and observability analysis (`analysis.py`). |
+| State estimation | EKF fusing encoder odometry with the ArUco marker's range, bearing and angle (`tb3dock/ekf.py`). |
+| Trajectory tracking | Gain-scheduled LQR controller using only the EKF estimate (`tb3dock/controller.py`). |
+| Visual docking | Docks at the ArUco-marked station within the 3 cm / 5° tolerance (1.8 cm and 3° in the normal run). |
+| Evaluation | Estimate error, NEES, tracking error and docking error, measured over repeated randomised trials (`run_trials.py`). |
 
 ## Repository structure
 
