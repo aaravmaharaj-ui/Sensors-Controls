@@ -9,7 +9,7 @@
     "random_obstacles": false,
     "nav": "lidar",
     "video": false,
-    "viewer": false,
+    "viewer": true,
     "random": false
   },
   "est_pos_rmse_m": 0.052322141091431906,
