@@ -68,9 +68,174 @@ The pipeline runs every 0.05 s (20 Hz):
 
 When the marker is out of view, the EKF keeps predicting from odometry, and its uncertainty grows until the marker is seen again.
 
-## Experimental evaluation
+## A. Modelling
 
-All errors are measured against the simulator's true pose, which is used for evaluation only.
+### Motion model
+We modelled the TurtleBot3 as a unicycle. The state is its pose in the room, $\mathbf{x} = [x,\ y,\ \theta]^T$, and the inputs are forward speed $v$ and turn rate $\omega$:
+
+$$\dot x = v\cos\theta,\qquad \dot y = v\sin\theta,\qquad \dot\theta = \omega$$
+
+In the EKF we use the discrete version, driven by the change in wheel angle from the encoders each step. We use the heading at the middle of the step, which is more accurate when the robot is turning.
+
+$$\Delta s = \tfrac{r}{2}(\Delta\phi_R + \Delta\phi_L),\qquad \Delta\theta = \tfrac{r}{b}(\Delta\phi_R - \Delta\phi_L)$$
+
+$$\mathbf{x}_{k+1} = \mathbf{x}_k + \begin{bmatrix}\Delta s\cos(\theta_k + \Delta\theta/2)\\ \Delta s\sin(\theta_k + \Delta\theta/2)\\ \Delta\theta\end{bmatrix}$$
+
+$r$ = 30.78 mm and $b$ = 167.9 mm are our calibrated wheel radius and wheel spacing (see B).
+
+### Measurement model
+The camera is 6 cm in front of the wheel axle. From each image we get the range $\rho$ and bearing $\beta$ to the marker, and the marker's angle $\psi$ relative to the robot:
+
+$$\rho = \sqrt{(m_x - c_x)^2 + (m_y - c_y)^2},\quad \beta = \operatorname{atan2}(m_y - c_y,\ m_x - c_x) - \theta,\quad \psi = \theta_m - \theta$$
+
+Here $(c_x, c_y) = (x + 0.06\cos\theta,\ y + 0.06\sin\theta)$ is where the camera is, and $(m_x, m_y, \theta_m)$ is the marker's known position and direction.
+
+### Tracking-error model
+For the controller we wrote the error between the planned route $(x_r, y_r, \theta_r)$ and the estimated pose in the robot's own frame:
+
+$$\mathbf{e} = \begin{bmatrix} \cos\theta & \sin\theta & 0\\ -\sin\theta & \cos\theta & 0\\ 0&0&1\end{bmatrix}\begin{bmatrix}x_r - x\\ y_r - y\\ \theta_r - \theta\end{bmatrix}$$
+
+Linearising around the route's speed $v_r$ and turn rate $\omega_r$ gives
+
+$$\dot{\mathbf{e}} = A\mathbf{e} + B\mathbf{u},\qquad A = \begin{bmatrix}0 & \omega_r & 0\\ -\omega_r & 0 & v_r\\ 0&0&0\end{bmatrix},\quad B = \begin{bmatrix}1&0\\0&0\\0&1\end{bmatrix}$$
+
+### Controllability
+We checked the rank of $[B\ AB\ A^2B]$ in `analysis.py`:
+
+| Route | Rank | Controllable |
+| --- | --- | --- |
+| Straight, $v_r$ = 0.15 | 3 | yes |
+| Turning, $v_r$ = 0.15, $\omega_r$ = 0.5 | 3 | yes |
+| Spinning on the spot, $\omega_r$ = 0.5 | 3 | yes |
+| Stopped | 2 | no |
+
+When the robot is stopped it can't fix a sideways error, since the wheels can't push it sideways. To avoid this, the controller always linearises at 0.03 m/s or faster.
+
+### Observability
+| What the EKF gets | Rank | Observable |
+| --- | --- | --- |
+| Odometry only | 0 | no |
+| Marker range and bearing | 2 | no |
+| Marker range, bearing and angle | 3 | yes |
+
+With just range and bearing to one marker, the robot could be anywhere on a circle around the marker and the readings would look the same. `analysis.py` confirms the missing direction is exactly that rotation. Adding the marker's angle fixes it, so we use all three.
+
+---
+
+## B. Sensing
+
+![Sensor performance](results/sensor_proof.png)
+
+### Calibration
+`calibrate.py` compares the sensors against the simulator's true motion, like checking a real robot with a tape measure.
+
+The encoders were the main one. We drove the robot straight to get the effective wheel radius, and along arcs to get the wheel spacing. We got 30.78 mm and 167.9 mm, compared with 33 mm and 160 mm on the datasheet, because the wheels squash and slip a little. We first calibrated the spacing by spinning on the spot, but that over-counted turns by about 5% on arcs, so we switched to arcs since that's how the robot actually drives. On a short S-shaped drive, the drift went from 5.6 cm with the datasheet values to 2.0 cm with ours (left graph).
+
+We also fitted the odometry noise ($\sigma_s = 0.12|\Delta s|$, $\sigma_\theta = 0.24|\Delta\theta|$) and measured the camera noise from 300 random views of the marker. The camera's range error is about 0.6 cm under 1 m but about 5.7 cm past 1.8 m (middle graph), and it detects the marker less often further away (100% under 1 m, about 46% past 1.8 m).
+
+### Noise handling
+- Camera noise in the EKF grows with distance, so close readings count more.
+- A 99% chi-square gate throws out readings that don't match the prediction. This mostly catches the ArUco angle occasionally flipping.
+- We only use the marker's angle within 1.2 m, since it's unreliable further out.
+- LiDAR beams that hit nothing return exactly max range with no noise added, so they can't show up as fake obstacles in the map.
+
+### Frames
+| Frame | Where it is | How we convert it |
+| --- | --- | --- |
+| Room | Origin at the robot's start, x towards the dock | The EKF state and the map are in this frame |
+| Robot | Middle of the wheel axle, x forward, y left | To the room frame using the estimated pose |
+| Camera | 6 cm forward and 10 cm up from the axle; OpenCV axes (x right, y down, z forward) | Robot forward = camera z, robot left = −camera x |
+| Marker | Centre of the marker | `solvePnP` gives it in the camera frame; we turn that into range, bearing and angle |
+| LiDAR | 9 cm above the axle, same axes as the robot | Each hit goes to the room frame using the estimated pose, then into the map |
+
+Because the map uses the estimated pose, estimate errors show up as small shifts in the map. Compared with the real obstacles, the median error of the mapped cells is 2.5 cm (right graph).
+
+---
+
+## C. Estimation
+
+![EKF error](results/ekf_error.png)
+
+We used an EKF to estimate $[x, y, \theta]$ at 20 Hz.
+
+The prediction step uses the encoder odometry and the motion model from A. The odometry noise is mapped into the state with the input Jacobian, $P \leftarrow FPF^T + VMV^T$. When the camera sees the marker (up to 10 Hz), the update uses range, bearing and angle. We use the Joseph form for the covariance update so $P$ stays symmetric.
+
+Two extra things made it a lot more reliable:
+- Outlier rejection with the 99% chi-square gate described in B.
+- Recovery after a push. If three close-up readings in a row get rejected, it's more likely the filter is wrong than the camera. We then inflate $P$ so the next readings get accepted and the estimate jumps back.
+
+We didn't hand-tune the noise values. They come straight from the calibration in B. The starting uncertainty is 2 cm and 2°.
+
+Results from the normal run:
+
+| | |
+| --- | --- |
+| Position error on odometry alone | up to 10 cm |
+| Position error once the marker is seen | under 1 cm (median 0.9 cm) |
+| Position RMSE, whole run | 5.2 cm |
+| Heading RMSE | 3.1° |
+| Marker readings | 57 used, 4 rejected |
+| Mean NEES | 13.9 (should be about 3) |
+
+In the graph, the uncertainty (light blue) keeps growing while the robot only has odometry, then drops almost to zero once the marker is seen (orange). The NEES is too high, though, which means the filter thinks it's more accurate than it is. We think this is wheel slip on turns that our odometry noise model doesn't fully capture. Raising the process noise should fix it, but we ran out of time to retune it.
+
+---
+
+## D. Control
+
+![Control](results/control.png)
+
+We used an LQR on the tracking-error model from A. It minimises
+
+$$J = \int (\mathbf{e}^T Q\,\mathbf{e} + \mathbf{u}^T R\,\mathbf{u})\,dt,\qquad \mathbf{u} = -K\mathbf{e}$$
+
+The route's speed and turn rate change along the path, so we recompute $K$ every step by solving the Riccati equation (gain scheduling). The commands sent to the robot are
+
+$$v = v_r\cos e_\theta + (K\mathbf{e})_1,\qquad \omega = \omega_r + (K\mathbf{e})_2$$
+
+capped at 0.22 m/s and 2 rad/s. The controller only ever gets the EKF estimate, not the true pose.
+
+### Tuning
+We used $Q = \mathrm{diag}(10, 20, 2)$ on [along-track, sideways, heading] error and $R = \mathrm{diag}(1, 0.5)$ on [speed, turn rate]. Sideways error gets the most weight because that's what decides whether the robot clears the obstacles and lines up with the dock. Driving straight at 0.15 m/s, the closed-loop poles are −3.16, −1.94 and −0.49, so it's stable.
+
+To check the choice, we ran the same run with a softer and a more aggressive $Q$ (right graph):
+
+| Q | Sideways RMSE | Steering effort | Docking |
+| --- | --- | --- | --- |
+| diag(1, 2, 0.2) | 2.4 cm | 0.71 rad/s² | 5.1 cm / 5.8°, missed |
+| diag(10, 20, 2) (ours) | 1.0 cm | 0.76 rad/s² | 1.8 cm / 3.0° |
+| diag(100, 200, 20) | 1.2 cm | 1.22 rad/s² | 1.2 cm / 1.6° |
+
+Steering effort is the RMS rate of change of the turn-rate command.
+
+The soft setting drifts too far off the route and misses the dock. The aggressive one actually docked a bit closer, but it steers about 60% harder, and harder steering means more wheel slip and worse odometry. Ours tracked about as well as the aggressive one while steering almost as smoothly as the soft one, so we kept it.
+
+In the normal run the sideways tracking error RMSE was 1.0 cm and the heading RMSE was 6.7°. The big heading spike at around 30 s is most likely the sharp turn onto the dock approach, where the route turns faster than the robot's 2 rad/s limit. It still docked at 1.8 cm and 3.0°.
+
+---
+
+## E. Integration and robustness
+
+We tested the full system with:
+- a random start pose and sensor noise in every trial
+- random pushes of 2–4 N for 0.3 s, which the encoders don't notice because the wheels slip
+- the real right wheel 1% bigger than the odometry assumes
+- obstacles moved to random positions, which the robot has to find with the LiDAR
+- the marker being out of view for most of the route
+
+Results from `run_trials.py`:
+
+| Condition | Docked | Mean dock error | Mean estimate RMSE |
+| --- | --- | --- | --- |
+| Normal (n = 20) | TBD | TBD | TBD |
+| Random pushes (n = 20) | TBD | TBD | TBD |
+| 1% wheel-size error (n = 20) | TBD | TBD | TBD |
+| Random obstacles, LiDAR planning (n = 8) | TBD | TBD | TBD |
+| Random obstacles, fixed route (n = 8) | TBD | TBD | TBD |
+
+![Normal run](results/nominal/summary.png)
+
+The last two rows compare our LiDAR planning with a fixed hand-placed route when the obstacles move.
 
 ### Normal run (`python run_demo.py`)
 
