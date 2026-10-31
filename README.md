@@ -86,7 +86,7 @@ $r$ = 30.78 mm and $b$ = 167.9 mm are our calibrated wheel radius and wheel spac
 ### Measurement model
 The camera is 6 cm in front of the wheel axle. From each image we get the range $\rho$ and bearing $\beta$ to the marker, and the marker's angle $\psi$ relative to the robot:
 
-$$\rho = \sqrt{(m_x - c_x)^2 + (m_y - c_y)^2},\quad \beta = \operatorname{atan2}(m_y - c_y,\ m_x - c_x) - \theta,\quad \psi = \theta_m - \theta$$
+$$\rho = \sqrt{(m_x - c_x)^2 + (m_y - c_y)^2},\quad \beta = \mathrm{atan2}(m_y - c_y,\ m_x - c_x) - \theta,\quad \psi = \theta_m - \theta$$
 
 Here $(c_x, c_y) = (x + 0.06\cos\theta,\ y + 0.06\sin\theta)$ is where the camera is, and $(m_x, m_y, \theta_m)$ is the marker's known position and direction.
 
@@ -97,7 +97,7 @@ $$\mathbf{e} = \begin{bmatrix} \cos\theta & \sin\theta & 0\\ -\sin\theta & \cos\
 
 Linearising around the route's speed $v_r$ and turn rate $\omega_r$ gives
 
-$$\dot{\mathbf{e}} = A\mathbf{e} + B\mathbf{u},\qquad A = \begin{bmatrix}0 & \omega_r & 0\\ -\omega_r & 0 & v_r\\ 0&0&0\end{bmatrix},\quad B = \begin{bmatrix}1&0\\0&0\\0&1\end{bmatrix}$$
+$$\dot{\mathbf{e}} = A\mathbf{e} + B\mathbf{u},\qquad A = \begin{bmatrix}0 & \omega_r & 0\\ -\omega_r & 0 & v_r\\ 0&0&0\end{bmatrix},\quad B = \begin{bmatrix}1 & 0 \\ 0 & 0 \\ 0 & 1\end{bmatrix}$$
 
 ### Controllability
 We checked the rank of $[B\ AB\ A^2B]$ in `analysis.py`:
@@ -187,7 +187,7 @@ In the graph, the uncertainty (light blue) keeps growing while the robot only ha
 
 We used an LQR on the tracking-error model from A. It minimises
 
-$$J = \int (\mathbf{e}^T Q\,\mathbf{e} + \mathbf{u}^T R\,\mathbf{u})\,dt,\qquad \mathbf{u} = -K\mathbf{e}$$
+$$J = \int (\mathbf{e}^T Q \mathbf{e} + \mathbf{u}^T R \mathbf{u}) dt,\qquad \mathbf{u} = -K\mathbf{e}$$
 
 The route's speed and turn rate change along the path, so we recompute $K$ every step by solving the Riccati equation (gain scheduling). The commands sent to the robot are
 
