@@ -226,18 +226,22 @@ We tested the full system with:
 
 Results from `run_trials.py`:
 
-| Condition | Docked | Mean dock error | Mean estimate RMSE |
+| Condition | Docked | Mean dock error* | Mean estimate RMSE |
 | --- | --- | --- | --- |
-| Normal (n = 20) | TBD | TBD | TBD |
-| Random pushes (n = 20) | TBD | TBD | TBD |
-| 1% wheel-size error (n = 20) | TBD | TBD | TBD |
-| Random obstacles, LiDAR planning (n = 8) | TBD | TBD | TBD |
-| Random obstacles, fixed route (n = 8) | TBD | TBD | TBD |
+| Normal (n = 20) | 19 / 20 | 1.6 cm | 6.4 cm |
+| Random pushes (n = 20) | 20 / 20 | 1.6 cm | 6.2 cm |
+| 1% wheel-size error (n = 20) | 18 / 20 | 1.9 cm | 7.3 cm |
+| Random obstacles, LiDAR planning (n = 8) | 7 / 8 | 0.8 cm | 5.4 cm |
+| Random obstacles, fixed route (n = 8) | 5 / 8 | 1.0 cm | 4.7 cm |
+
+\*Mean over the runs that docked. Failed runs are described below.
+
+The last two rows compare our LiDAR planning with a fixed hand-placed route when the obstacles move. The fixed route failed 3 of 8 times because it drove into obstacles that had moved onto it, and the robot stopped about 2.5 m short of the dock. With LiDAR planning, only 1 of 8 failed, and that one reached the dock but was 6.6 cm out.
+
+The two failures with wheel-size error were near misses (3.8 cm and 6.2 cm, against the 3 cm tolerance). The one normal-run failure (seed 114) was different. Its random start sent the planner on a long route south of the obstacles, and the marker wasn't seen until late. Over that time, the heading drifted about 17° and the position estimate drifted almost 50 cm. The robot ended up against an obstacle it thought it was clear of, and the safety stop held it there. This is the main weakness of having only one marker (see Limitations).
 
 <img width="1690" height="1040" alt="summary" src="https://github.com/user-attachments/assets/ced791a3-0a35-4d5c-a517-5e4641ec1816" />
 
-
-The last two rows compare our LiDAR planning with a fixed hand-placed route when the obstacles move.
 
 ### Normal run (`python run_demo.py`)
 
