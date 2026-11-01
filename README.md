@@ -1,5 +1,11 @@
 # Sensors-Controls
 
+## Group and contributions
+
+**Group:** 
+**Repository:** https://github.com/aaravmaharaj-ui/Sensors-Controls
+**Demo video:** 
+
 ## Overview
 
 **Visual Waypoint Navigation** is a simulated mobile robotics project for 41014/42043 Sensors and Control in Mechatronics Systems (Track A). The project integrates sensing, state estimation and feedback control to navigate a TurtleBot3 Burger through an indoor room containing four obstacles: three boxes and a cylinder.
