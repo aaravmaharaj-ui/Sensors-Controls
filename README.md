@@ -6,8 +6,8 @@
 
 **Group Members:**
 - Aarav Maharaj (25880232)
-- Amani Dutt ()
-- Anotida Kamungazi ()
+- Amani Dutt (26075364)
+- Anotida Kamungazi (25653320)
 
 **Demo video:** 
 
@@ -325,12 +325,12 @@ python -m pytest tests
 
 | Member | Responsibilities |
 | --- | --- |
-| To be confirmed | Sensing and sensor calibration |
-| To be confirmed | State estimation and EKF |
-| To be confirmed | State-space modelling and trajectory tracking |
-| To be confirmed | Simulation integration, testing and evaluation |
-
-Responsibilities will be updated to reflect each team member's actual contributions.
+| Amani | Sensing and sensor calibration |
+| All 3 members | State estimation and EKF |
+| Dev (Aarav) | State-space modelling and trajectory tracking |
+| Anotida | Simulation integration, testing and evaluation |
+| Dev (Aarav) + Amani | project page |
+| Amani + Anotida | video editing |
 
 ## Limitations and improvements
 
