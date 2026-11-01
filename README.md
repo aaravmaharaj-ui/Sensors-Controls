@@ -341,5 +341,8 @@ python -m pytest tests
 
 
 ## Generative AI declaration
-| Tool | Purpose | | --- | --- | | [Claude (Anthropic)] | [Helped in Debugging code, drafting README text, planning the video (providing a possible structure to follow)] |
+
+| Tool | Purpose |
+| --- | --- |
+| Claude (Anthropic) | Helped in debugging code, drafting README text for this project page, planning the video (providing a possible structure for us to follow) |
 
