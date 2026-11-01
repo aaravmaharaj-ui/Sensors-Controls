@@ -13,7 +13,7 @@ from . import groundtruth   # EVALUATION ONLY
 
 
 def _wait_for_enter(view, refresh):
-    """Keep the viewer (and its panels) refreshing until Enter is pressed or the window closes."""
+
     import threading
     done = threading.Event()
 
@@ -80,16 +80,7 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
                   "x_true": [ekf.x.copy()], "accepted": [False]}   # no truth needed before the start
             print("\n>>> Click Enter to start <<<\n")
 
-            def _show_start():
-                overlay.update(L0)
-                try:      # big message in the viewer window too
-                    import mujoco
-                    view.set_texts((mujoco.mjtFontScale.mjFONTSCALE_200,
-                                    mujoco.mjtGridPos.mjGRID_TOPLEFT,
-                                    "Click Enter to start", "(in the terminal)"))
-                except Exception:
-                    pass
-            _wait_for_enter(view, _show_start)
+            _wait_for_enter(view, lambda: overlay.update(L0))
             if not view.is_running():
                 view.close(); cam.renderer.close()
                 raise SystemExit("viewer closed before the run started")
