@@ -3,7 +3,9 @@
 ## Group and contributions
 
 **Group:** 
-**Repository:** https://github.com/aaravmaharaj-ui/Sensors-Controls
+
+**Repository:** 
+
 **Demo video:** 
 
 ## Overview
