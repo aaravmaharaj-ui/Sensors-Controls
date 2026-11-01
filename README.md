@@ -6,8 +6,6 @@
 
 **Group Members:**
 
-**Repository:** 
-
 **Demo video:** 
 
 ## Overview
