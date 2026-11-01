@@ -340,6 +340,6 @@ python -m pytest tests
 - **Close-range dropouts:** marker detection occasionally misses a frame within about 17 cm of the marker, so the last few centimetres rely mostly on odometry.
 
 
-## AI Decleration
-
+## Generative AI declaration
+| Tool | Purpose | | --- | --- | | [Claude (Anthropic)] | [Helped in Debugging code, drafting README text, planning the video (providing a possible structure to follow)] |
 
