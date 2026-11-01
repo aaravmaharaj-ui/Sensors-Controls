@@ -33,18 +33,8 @@ def _wait_for_enter(view, refresh):
 
 def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
               meas_model=C.MEAS_MODEL, video=None, viewer=False, settle_time=5.0, verbose=True,
-              nav_mode=C.NAV_MODE, random_obstacles=False, speed=0.5, wait_start=True):
-    """
-    seed             random seed (start pose, sensor noise)
-    start_noise      randomise the TRUE start pose around the nominal one (P0_STD)
-    push             (time_s, force_x, force_y, duration_s) external shove, or None
-    wheel_radius_err real right wheel radius error, e.g. 0.02 = 2% (odometry is not told)
-    video            path to an .mp4 to record, or None
-    nav_mode         "lidar": plan the route from the LiDAR map; "fixed": hand-placed waypoints
-    random_obstacles move the obstacles to random positions (the robot is not told)
-    speed            viewer only: playback speed (1.0 = real time, 0.5 = half speed)
-    wait_start       viewer only: wait for Enter before the robot starts moving
-    """
+              nav_mode=C.NAV_MODE, random_obstacles=False, speed=1.0, wait_start=True):
+
     rng = np.random.default_rng(seed)
     true_start = C.START_POSE + (rng.normal(0, C.P0_STD) if start_noise else 0.0)
     sim = Sim(true_start, wheel_radius_err,
@@ -88,8 +78,18 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
             cam.last_image = cam.renderer.render().copy()
             L0 = {"t": [0.0], "x_est": [ekf.x.copy()], "P": [ekf.P.copy()],
                   "x_true": [ekf.x.copy()], "accepted": [False]}   # no truth needed before the start
-            print("Press Enter in this terminal to start the robot.")
-            _wait_for_enter(view, lambda: overlay.update(L0))
+            print("\n>>> Click Enter to start <<<\n")
+
+            def _show_start():
+                overlay.update(L0)
+                try:      # big message in the viewer window too
+                    import mujoco
+                    view.set_texts((mujoco.mjtFontScale.mjFONTSCALE_200,
+                                    mujoco.mjtGridPos.mjGRID_TOPLEFT,
+                                    "Click Enter to start", "(in the terminal)"))
+                except Exception:
+                    pass
+            _wait_for_enter(view, _show_start)
             if not view.is_running():
                 view.close(); cam.renderer.close()
                 raise SystemExit("viewer closed before the run started")

@@ -24,8 +24,8 @@ if __name__ == "__main__":
                     help="lidar: plan the route from the LiDAR map; fixed: hand-placed waypoints")
     ap.add_argument("--video", action="store_true")
     ap.add_argument("--viewer", action="store_true")
-    ap.add_argument("--speed", type=float, default=0.5,
-                    help="viewer playback speed: 0.5 = half speed (default), 1 = real time")
+    ap.add_argument("--speed", type=float, default=1.0,
+                    help="viewer playback speed: 1 = real time (default), 0.5 = half speed")
     ap.add_argument("--no-wait", action="store_true",
                     help="viewer: start driving straight away instead of waiting for Enter")
     ap.add_argument("--random", action="store_true",
