@@ -339,5 +339,6 @@ Responsibilities will be updated to reflect each team member's actual contributi
 - **Close-range dropouts:** marker detection occasionally misses a frame within about 17 cm of the marker, so the last few centimetres rely mostly on odometry.
 
 
-## Video Link
+## AI Decleration
+
 
