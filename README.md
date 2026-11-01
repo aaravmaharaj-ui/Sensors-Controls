@@ -327,7 +327,7 @@ Responsibilities will be updated to reflect each team member's actual contributi
 - **Late marker sighting:** the marker is only seen in the last third of the route, so the estimate drifts up to 10 cm on odometry alone. A second marker partway along, or matching LiDAR scans to the map, would correct it earlier.
 - **Cautious routes:** the planner keeps about 40 cm from obstacles, so the robot goes around the obstacle group instead of weaving between them. Lowering the clearance would give shorter routes but less safety margin.
 - **Close-range dropouts:** marker detection occasionally misses a frame within about 17 cm of the marker, so the last few centimetres rely mostly on odometry.
-- **Simulation only:** the system has not been tested on the real TurtleBot3. Real wheel slip, lighting and LiDAR reflections would need retuning.
+
 
 ## Video Link
 
