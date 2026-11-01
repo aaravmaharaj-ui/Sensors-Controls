@@ -12,10 +12,39 @@ from .navigation import Navigator
 from . import groundtruth   # EVALUATION ONLY
 
 
+def _wait_for_enter(view, refresh):
+    """Keep the viewer (and its panels) refreshing until Enter is pressed or the window closes."""
+    import threading
+    done = threading.Event()
+
+    def _wait():
+        try:
+            input()
+        except EOFError:
+            pass
+        done.set()
+
+    threading.Thread(target=_wait, daemon=True).start()
+    while view.is_running() and not done.is_set():
+        refresh()
+        view.sync()
+        time.sleep(0.1)
+
+
 def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
               meas_model=C.MEAS_MODEL, video=None, viewer=False, settle_time=5.0, verbose=True,
-              nav_mode=C.NAV_MODE, random_obstacles=False):
-    
+              nav_mode=C.NAV_MODE, random_obstacles=False, speed=0.5, wait_start=True):
+    """
+    seed             random seed (start pose, sensor noise)
+    start_noise      randomise the TRUE start pose around the nominal one (P0_STD)
+    push             (time_s, force_x, force_y, duration_s) external shove, or None
+    wheel_radius_err real right wheel radius error, e.g. 0.02 = 2% (odometry is not told)
+    video            path to an .mp4 to record, or None
+    nav_mode         "lidar": plan the route from the LiDAR map; "fixed": hand-placed waypoints
+    random_obstacles move the obstacles to random positions (the robot is not told)
+    speed            viewer only: playback speed (1.0 = real time, 0.5 = half speed)
+    wait_start       viewer only: wait for Enter before the robot starts moving
+    """
     rng = np.random.default_rng(seed)
     true_start = C.START_POSE + (rng.normal(0, C.P0_STD) if start_noise else 0.0)
     sim = Sim(true_start, wheel_radius_err,
@@ -45,11 +74,25 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
     if viewer:
         import mujoco.viewer
         view = mujoco.viewer.launch_passive(sim.m, sim.d)
-        print("MuJoCo viewer opened: the robot drives in real time (~30 s).")
+        speed_txt = "real time" if speed == 1.0 else f"{speed:g}x speed"
+        print(f"MuJoCo viewer opened ({speed_txt}).")
         from .live import LiveOverlay
         overlay = LiveOverlay(view, cam, path)
         overlay.grid = nav.grid if nav else None
         overlay.obstacles = sim.obstacles
+        if wait_start:
+            # show the start state (first LiDAR map, planned route, camera view) and wait.
+            # The camera image is rendered directly, NOT measured, so the random numbers
+            # (and therefore the run) are identical to a run without the viewer.
+            cam.renderer.update_scene(sim.d, camera="cam")
+            cam.last_image = cam.renderer.render().copy()
+            L0 = {"t": [0.0], "x_est": [ekf.x.copy()], "P": [ekf.P.copy()],
+                  "x_true": [ekf.x.copy()], "accepted": [False]}   # no truth needed before the start
+            print("Press Enter in this terminal to start the robot.")
+            _wait_for_enter(view, lambda: overlay.update(L0))
+            if not view.is_running():
+                view.close(); cam.renderer.close()
+                raise SystemExit("viewer closed before the run started")
 
     n_steps = int(C.NAV_MAX_TIME / C.DT)
     last_plan = 0.0
@@ -57,7 +100,7 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
     L = {k: [] for k in ["t", "x_est", "P", "x_true", "ref", "u", "e_ctrl",
                          "meas", "accepted", "nis", "safety", "front"]}
 
-    t_wall0 = time.perf_counter()
+    t_wall0 = time.perf_counter()      # starts after the Enter press
     for k in range(n_steps):
         t = k * C.DT
 
@@ -121,18 +164,16 @@ def run_trial(seed=0, start_noise=True, push=None, wheel_radius_err=0.0,
             if k % 2 == 0:
                 overlay.update(L, scan)
             view.sync()
-            # run at real-time speed so you can watch it
-            lag = (k + 1) * C.DT - (time.perf_counter() - t_wall0)
+            # run at real-time speed (or slower / faster with speed) so you can watch it
+            lag = (k + 1) * C.DT / speed - (time.perf_counter() - t_wall0)
             if lag > 0:
                 time.sleep(lag)
 
     if view is not None:
         # keep the window open until you are done looking (the viewer draws on its own thread)
         print("Run finished. Press Enter in this terminal to close the viewer and see the results.")
-        try:
-            input()
-        except EOFError:
-            pass
+        # keep the panels updating (so they follow window or side-panel resizes) until Enter
+        _wait_for_enter(view, lambda: overlay.update(L, scan))
         overlay.close()
         view.close()
 

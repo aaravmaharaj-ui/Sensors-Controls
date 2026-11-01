@@ -24,6 +24,10 @@ if __name__ == "__main__":
                     help="lidar: plan the route from the LiDAR map; fixed: hand-placed waypoints")
     ap.add_argument("--video", action="store_true")
     ap.add_argument("--viewer", action="store_true")
+    ap.add_argument("--speed", type=float, default=0.5,
+                    help="viewer playback speed: 0.5 = half speed (default), 1 = real time")
+    ap.add_argument("--no-wait", action="store_true",
+                    help="viewer: start driving straight away instead of waiting for Enter")
     ap.add_argument("--random", action="store_true",
                     help="randomise start pose, sensor noise, obstacle positions, wheel size error and a kick")
     a = ap.parse_args()
@@ -46,7 +50,7 @@ if __name__ == "__main__":
     log, m = run_trial(seed=a.seed, start_noise=not a.no_start_noise, push=a.push,
                        wheel_radius_err=a.wheel_err, meas_model=a.meas, nav_mode=a.nav, random_obstacles=a.random_obstacles,
                        video=os.path.join(out, "demo.mp4") if a.video else None,
-                       viewer=a.viewer)
+                       viewer=a.viewer, speed=a.speed, wait_start=not a.no_wait)
     summary_figure(log, m, os.path.join(out, "summary.png"))
     with open(os.path.join(out, "metrics.json"), "w") as f:
         json.dump({"args": vars(a), **m}, f, indent=2)
