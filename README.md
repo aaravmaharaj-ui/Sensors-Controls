@@ -338,7 +338,24 @@ python -m pytest tests
 - **Late marker sighting:** the marker is only seen in the last third of the route, so the estimate drifts up to 10 cm on odometry alone. A second marker partway along, or matching LiDAR scans to the map, would correct it earlier.
 - **Cautious routes:** the planner keeps about 40 cm from obstacles, so the robot goes around the obstacle group instead of weaving between them. Lowering the clearance would give shorter routes but less safety margin.
 - **Close-range dropouts:** marker detection occasionally misses a frame within about 17 cm of the marker, so the last few centimetres rely mostly on odometry.
+- 
+## Acknowledgements
 
+The methods in this project follow the 41014 Sensors and Control in Mechatronics Systems subject material:
+
+| Project part | Subject material |
+| --- | --- |
+| Closed-loop pipeline (sense → estimate → control) | Week 1: Dynamic systems, closed-loop control, and the role of sensing |
+| Wheel-encoder odometry, noise and calibration | Week 2: Proprioceptive and exteroceptive sensing; noise, bias, calibration |
+| ArUco marker detection and pose (OpenCV, solvePnP) | Week 3: Cameras and visual features |
+| LiDAR range sensing and occupancy mapping | Week 4: Depth and range sensing |
+| State-space model, controllability and observability | Week 5: State-space modelling, controllability, observability |
+| LQR trajectory tracker | Week 6: State feedback: pole placement and LQR |
+| Extended Kalman Filter | Week 7: State estimation: observers and the Kalman filter |
+| Controller running on the estimated state | Week 8: Output feedback and the separation principle |
+| Visual docking and system integration | Week 9: Visual servoing and integration |
+
+External libraries: MuJoCo (simulation), OpenCV (ArUco detection and pose estimation), NumPy, SciPy (Riccati solver, distance transform) and Matplotlib (plots).
 
 ## Generative AI declaration
 
