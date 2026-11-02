@@ -1,0 +1,30 @@
+{
+  "args": {
+    "name": "nominal",
+    "seed": 1,
+    "no_start_noise": false,
+    "push": null,
+    "wheel_err": 0.0,
+    "meas": "pose",
+    "random_obstacles": false,
+    "nav": "lidar",
+    "video": false,
+    "viewer": true,
+    "speed": 0.5,
+    "no_wait": false,
+    "random": false
+  },
+  "est_pos_rmse_m": 0.0487399606411764,
+  "est_yaw_rmse_deg": 2.5577425974490384,
+  "track_pos_rmse_m": 0.04456535876652249,
+  "track_pos_max_m": 0.07774698809301368,
+  "dock_pos_err_m": 2.3816627884982196,
+  "dock_yaw_err_deg": 42.40190079085443,
+  "dock_success": false,
+  "mean_nees": 3.738011019852289,
+  "n_detections": 0,
+  "n_rejected": 0,
+  "safety_stops": 0,
+  "min_front_range_m": 0.6189045847260315,
+  "n_plans": 2
+}

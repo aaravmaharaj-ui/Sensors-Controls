@@ -1,0 +1,33 @@
+{
+  "args": {
+    "name": "random_30048",
+    "seed": 30048,
+    "no_start_noise": false,
+    "push": [
+      19.7,
+      0.0,
+      3.7,
+      0.2
+    ],
+    "wheel_err": 0.0038,
+    "meas": "pose",
+    "random_obstacles": true,
+    "nav": "lidar",
+    "video": false,
+    "viewer": true,
+    "random": true
+  },
+  "est_pos_rmse_m": 0.0671731914563351,
+  "est_yaw_rmse_deg": 3.221271123353862,
+  "track_pos_rmse_m": 0.06815846487574302,
+  "track_pos_max_m": 0.11196679344702788,
+  "dock_pos_err_m": 0.8382201649476966,
+  "dock_yaw_err_deg": 4.582972354192641,
+  "dock_success": false,
+  "mean_nees": 23.41615856914578,
+  "n_detections": 92,
+  "n_rejected": 4,
+  "safety_stops": 0,
+  "min_front_range_m": 0.5664710458602135,
+  "n_plans": 3
+}
