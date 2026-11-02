@@ -341,7 +341,7 @@ python -m pytest tests
 - 
 ## Acknowledgements
 
-The methods in this project follow the 41014 Sensors and Control in Mechatronics Systems subject material:
+The methods in this project follow the 41014 Sensors and Control for Mechatronics Systems subject material:
 
 | Project part | Subject material |
 | --- | --- |
